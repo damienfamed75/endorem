@@ -74,12 +74,12 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 func (p *Player) movePlayer(ground *resolv.Space) {
 
 	// Left/Right Movement
-	//	p.SpeedY += 0.5
+	p.SpeedY += 0.5
 
 	friction := float32(0.5)
 	accel := 0.5 + friction
 
-	maxSpd := float32(1)
+	maxSpd := float32(3)
 
 	if p.SpeedX > friction {
 		p.SpeedX -= friction
@@ -104,8 +104,20 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 	if p.SpeedX < -maxSpd {
 		p.SpeedX = -maxSpd
 	}
+
+	// Jumping
+	down := ground.Resolve(p.Collision, 0, 4)
+	onGround := down.Colliding()
+	if !onGround {
+		p.state = "in air"
+	}
+
+	if r.IsKeyPressed(r.KeyW) && onGround {
+		p.SpeedY = -8
+	}
+
 	x := int32(p.SpeedX)
-	//y := int32(p.SpeedY)
+	y := int32(p.SpeedY)
 
 	// if res := ground.Resolve(p.Collision, x, 0); res.Colliding() {
 	// 	x = res.ResolveX
@@ -114,10 +126,20 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 
 	p.Collision.X += x
 
-	// Jumping
-	if r.IsKeyPressed(r.KeyW) && p.onGround {
-		p.Collision.Move(0, -20)
+	res := ground.Resolve(p.Collision, 0, y+4)
+
+	if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
+		res = resolv.Collision{}
 	}
+	if !res.Colliding() {
+		res = ground.Resolve(p.Collision, 0, y)
+	}
+
+	if res.Colliding() {
+		y = res.ResolveY
+		p.SpeedY = 0
+	}
+	p.Collision.Y += y
 
 	// Crouching
 	// Changes to crouch sprite and hurtboxes
@@ -144,24 +166,12 @@ func (p *Player) checkAttack() {
 	}
 }
 
-// checkInAir determines if the player is colliding with the ground, and if not they will
-// fall towards the ground
-func (p *Player) checkInAir(ground *resolv.Space) {
-	if p.Collision.IsColliding(ground) {
-		p.onGround = true
-	} else {
-		p.state = "falling"
-		p.onGround = false
-		p.Collision.Move(0, 1)
-	}
-}
-
 func (p *Player) Update(ground *resolv.Space) {
 	p.state = "idle"
 
 	p.movePlayer(ground)
 	p.checkAttack()
-	p.checkInAir(ground)
+	//p.checkInAir(ground)
 }
 
 // Draw creates a rectangle using Raylib and draws the outline of it.
