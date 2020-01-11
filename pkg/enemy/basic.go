@@ -12,21 +12,21 @@ import (
 
 // Basic is a testing enemy that is very basic in attacks and features.
 type Basic struct {
-	Health     int
-	SpeedX     float32
-	SpeedY     float32
-	IsDead     bool
-	Sprite     r.Texture2D
-	Collision  *resolv.Rectangle
-	AttackZone *resolv.Rectangle
-	Hitbox     *resolv.Rectangle
+	Health       int
+	SpeedX       float32
+	SpeedY       float32
+	IsDead       bool
+	Origin       r.Vector2
+	Destinations [2]r.Vector2 // left and right destinations
+	Sprite       r.Texture2D
+	Collision    *resolv.Rectangle
+	AttackZone   *resolv.Rectangle
+	Hitbox       *resolv.Rectangle
 
-	state       string
-	isAttacking bool
-	// Multiplier of the enemy's horizontal movement.
-	speedMultiplier float32
-	// How often the enemy can attack (in milliseconds)
-	attackBefore    time.Time
+	state           string
+	isAttacking     bool
+	speedMultiplier float32   // Multiplier of the enemy's horizontal movement.
+	attackBefore    time.Time // How often the enemy can attack (milliseconds)
 	attackTimer     time.Duration
 	healthBefore    time.Time
 	invincibleTimer time.Duration
@@ -51,6 +51,18 @@ func setupBasic() *Basic {
 // NewBasic returns a configured basic enemy at the given coordinates.
 func NewBasic(x, y int) *Basic {
 	b := setupBasic()
+
+	b.Origin = r.NewVector2(float32(x), float32(y))
+	b.Destinations = [2]r.Vector2{
+		r.NewVector2(
+			float32(int32(x)-b.Sprite.Height*2)+float32(b.Sprite.Width/2),
+			float32(y)+float32(b.Sprite.Height),
+		),
+		r.NewVector2(
+			float32(int32(x)+b.Sprite.Height*2)+float32(b.Sprite.Width/2),
+			float32(y)+float32(b.Sprite.Height),
+		),
+	}
 
 	var (
 		// These variables are only used when instantiating a new enemy so they
@@ -162,6 +174,22 @@ func (b *Basic) debugDraw() {
 		int(b.AttackZone.X), int(b.AttackZone.Y),
 		int(b.AttackZone.W), int(b.AttackZone.H),
 		r.Yellow,
+	)
+
+	enemyCenterBottom := r.NewVector2(
+		float32(b.Collision.X)+float32(b.Collision.W/2),
+		float32(b.Collision.Y+b.Collision.H),
+	)
+
+	r.DrawLineEx(
+		enemyCenterBottom,
+		b.Destinations[0],
+		3, r.DarkBlue,
+	)
+	r.DrawLineEx(
+		enemyCenterBottom,
+		b.Destinations[1],
+		3, r.Maroon,
 	)
 
 	// If the enemy is attacking then draw the debug collision box.
