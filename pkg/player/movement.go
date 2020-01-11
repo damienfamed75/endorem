@@ -70,6 +70,8 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 	p.SetData(p)
 	// Set the hurtbox to store differing data.
 	p.Collision.SetData(HurtboxData)
+	p.Collision.AddTags(TagHurtbox)
+	p.Hitbox.AddTags(TagHitbox)
 
 	// Add to collision boxes to player space.
 	p.Add(p.Collision)

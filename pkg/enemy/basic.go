@@ -1,8 +1,6 @@
 package enemy
 
 import (
-	"log"
-	"strconv"
 	"time"
 
 	"github.com/damienfamed75/endorem/pkg/common"
@@ -16,8 +14,9 @@ type Basic struct {
 	Health          int
 	SpeedX          float32
 	SpeedY          float32
-	Direction       int8
 	IsDead          bool
+	PlayerSeen      bool // If the enemy has spotted the enemy.
+	Facing          common.Direction
 	Origin          r.Vector2
 	Destinations    [2]r.Vector2 // left and right destinations
 	LastDestination int
@@ -26,29 +25,35 @@ type Basic struct {
 	AttackZone      *resolv.Rectangle
 	Hitbox          *resolv.Rectangle
 
-	state           common.State
-	isAttacking     bool
-	speedMultiplier float32   // Multiplier of the enemy's horizontal movement.
-	attackBefore    time.Time // How often the enemy can attack (milliseconds)
-	attackTimer     time.Duration
-	healthBefore    time.Time
-	invincibleTimer time.Duration
+	direction          int8
+	state              common.State
+	isAttacking        bool
+	speedMultiplier    float32   // Multiplier of the enemy's horizontal movement.
+	attackBefore       time.Time // How often the enemy can attack (milliseconds)
+	attackTimer        time.Duration
+	healthBefore       time.Time
+	invincibleTimer    time.Duration
+	destinationMetTime time.Time
+	waitTime           time.Duration
 
 	*resolv.Space
 }
 
 func setupBasic() *Basic {
 	return &Basic{
-		Sprite:          r.LoadTexture("assets/basicenemy.png"),
-		Space:           resolv.NewSpace(),
-		Health:          2 + common.GlobalConfig.Enemy.AddedHealth,
-		Direction:       1,
-		state:           common.StateIdle,
-		speedMultiplier: common.GlobalConfig.Enemy.MoveSpeedMultiplier,
-		attackTimer:     time.Duration(common.GlobalConfig.Enemy.AttackTimer),
-		attackBefore:    time.Now(),
-		healthBefore:    time.Now(),
-		invincibleTimer: time.Duration(common.GlobalConfig.Enemy.InvincibleTimer),
+		Sprite:             r.LoadTexture("assets/basicenemy.png"),
+		Space:              resolv.NewSpace(),
+		Health:             2 + common.GlobalConfig.Enemy.AddedHealth,
+		direction:          1,
+		Facing:             common.Right,
+		state:              common.StateIdle,
+		speedMultiplier:    common.GlobalConfig.Enemy.MoveSpeedMultiplier,
+		attackTimer:        time.Duration(common.GlobalConfig.Enemy.AttackTimer),
+		attackBefore:       time.Now(),
+		healthBefore:       time.Now(),
+		destinationMetTime: time.Now(),
+		waitTime:           time.Duration(common.GlobalConfig.Enemy.WaitTime),
+		invincibleTimer:    time.Duration(common.GlobalConfig.Enemy.InvincibleTimer),
 	}
 }
 
@@ -97,10 +102,13 @@ func NewBasic(x, y int) *Basic {
 	)
 
 	// Add the collision boxes to the enemy space.
-	b.Add(b.Collision)
+	b.Add(b.Collision, b.Hitbox, b.AttackZone)
 	b.SetData(b)
 
 	// Set the hitbox data to be different from the hitbox data.
+	b.AttackZone.SetData(AttackZoneData)
+	b.AttackZone.AddTags(TagAttackZone)
+	b.Collision.AddTags(TagHurtbox)
 	b.Hitbox.SetData(HitboxData)
 
 	// Tag this enemy as an enemy.
@@ -108,62 +116,6 @@ func NewBasic(x, y int) *Basic {
 	b.Hitbox.AddTags(common.TagEnemy)
 
 	return b
-}
-func (b *Basic) move() {
-	friction := float32(0.5)
-	accel := (0.5 + friction) * float32(b.Direction)
-
-	maxSpd := float32(1)
-	if b.SpeedX > friction {
-		b.SpeedX -= friction
-	} else if b.SpeedX < -friction {
-		b.SpeedX += friction
-	} else {
-		b.SpeedX = 0
-	}
-
-	// if met destination on X, turn around
-	for i, d := range b.Destinations {
-		if b.Collision.X == int32(d.X) && b.LastDestination != i {
-			b.Direction *= -1
-			b.LastDestination = i
-			log.Print("Destination MET!")
-		}
-	}
-	b.SpeedX += accel
-
-	if b.SpeedX > maxSpd {
-		b.SpeedX = maxSpd
-	}
-	if b.SpeedX < -maxSpd {
-		b.SpeedX = -maxSpd
-	}
-
-	x := int32(b.SpeedX)
-	b.Collision.X += x
-}
-
-// Update is non drawing related functionality with the enemy.
-func (b *Basic) Update() {
-	b.move()
-	// Debugging:
-	// Timer for attacks every half second.
-	if time.Since(b.attackBefore) >= time.Millisecond*b.attackTimer {
-		// Reset timer.
-		b.attackBefore = time.Now()
-
-		// Flip attack value.
-		b.isAttacking = !b.isAttacking
-		if b.isAttacking {
-			// Re-add hurtbox to the enemy space and set position to enemy.
-			b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
-			b.Add(b.Hitbox)
-		} else {
-			// Remove hurtbox from enemy space.
-			b.Remove(b.Hitbox)
-			b.state = common.StateIdle
-		}
-	}
 }
 
 // Draw is used for raylib exclusive drawing function calls.
@@ -184,57 +136,5 @@ func (b *Basic) TakeDamage() {
 			b.state = common.StateDead
 			b.Clear()
 		}
-	}
-}
-
-func (b *Basic) debugDraw() {
-	// Draw health.
-	r.DrawText(
-		"HP: "+strconv.Itoa(b.Health),
-		int(b.Collision.X), int(b.Collision.Y-(b.Collision.W/2)), 10,
-		r.White,
-	)
-	// Draw state.
-	r.DrawText(
-		b.state.String(),
-		int(b.Collision.X), int(b.Collision.Y+b.Collision.H), 10,
-		r.White,
-	)
-
-	// Draw the collision box for debugging reasons.
-	r.DrawRectangleLines(
-		int(b.Collision.X), int(b.Collision.Y),
-		int(b.Collision.W), int(b.Collision.H),
-		r.Red,
-	)
-	r.DrawRectangleLines(
-		int(b.AttackZone.X), int(b.AttackZone.Y),
-		int(b.AttackZone.W), int(b.AttackZone.H),
-		r.Yellow,
-	)
-
-	enemyCenterBottom := r.NewVector2(
-		float32(b.Collision.X)+float32(b.Collision.W/2),
-		float32(b.Collision.Y+b.Collision.H),
-	)
-
-	r.DrawLineEx(
-		enemyCenterBottom,
-		b.Destinations[0],
-		3, r.DarkBlue,
-	)
-	r.DrawLineEx(
-		enemyCenterBottom,
-		b.Destinations[1],
-		3, r.Maroon,
-	)
-
-	// If the enemy is attacking then draw the debug collision box.
-	if b.isAttacking {
-		r.DrawRectangleLines(
-			int(b.Hitbox.X), int(b.Hitbox.Y),
-			int(b.Hitbox.W), int(b.Hitbox.H),
-			r.Green,
-		)
 	}
 }

@@ -32,6 +32,7 @@ type Config struct {
 		MoveSpeedMultiplier float32 `json:"moveSpeedMultiplier"`
 		AttackTimer         int     `json:"attackTimer"`     // milliseconds
 		InvincibleTimer     int     `json:"invincibleTimer"` // milliseconds
+		WaitTime            int     `json:"waitTime"`        // milliseconds
 	} `json:"enemy"`
 }
 

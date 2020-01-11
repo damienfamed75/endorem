@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
 	"github.com/damienfamed75/endorem/pkg/enemy"
 	"github.com/damienfamed75/endorem/pkg/player"
@@ -34,6 +35,8 @@ func main() {
 	// Add everything to the world space.
 	g.world.Add(tPlane, tPlayer, basicEnemy)
 
+	distanceColor := r.GopherBlue
+
 	for !r.WindowShouldClose() {
 		// Update the camera's position based on the player's movement.
 		cam.Update(tPlayer.Update(tPlane.Space))
@@ -41,11 +44,6 @@ func main() {
 		basicEnemy.Update()
 
 		enemies := g.world.FilterByTags(common.TagEnemy)
-
-		// Player has been touched by an enemy.
-		if sh := tPlayer.GetCollidingShapes(enemies); sh.GetData() == player.HurtboxData {
-			tPlayer.TakeDamage()
-		}
 
 		for _, en := range *enemies {
 			if en.GetData() == nil {
@@ -57,9 +55,20 @@ func main() {
 			// If it's a reference to itself then it's a Hurtbox.
 			switch t := en.GetData().(type) {
 			case *enemy.Basic: // Hurtbox
+				enX, enY := t.Collision.Center()
+				pX, pY := tPlayer.Collision.Center()
+				if resolv.Distance(enX, enY, pX, pY) < 250 {
+					distanceColor = r.Red
+				} else {
+					distanceColor = r.Blue
+				}
+
 				// If the hurtbox is colliding a player hitbox then take damage.
-				if t.IsColliding(tPlayer.Hitbox) {
+				if t.FilterByTags(enemy.TagHurtbox).IsColliding(tPlayer.Hitbox) {
 					t.TakeDamage()
+					// If the player is colliding with the enemy then they should take damage.
+				} else if tPlayer.FilterByTags(player.TagHurtbox).IsColliding(t.FilterOutByTags(enemy.TagAttackZone)) {
+					tPlayer.TakeDamage()
 				}
 			}
 		}
@@ -69,6 +78,10 @@ func main() {
 		r.ClearBackground(r.Black)
 
 		r.DrawText("Endorem hello", 20, 20, 40, r.GopherBlue)
+		enX, enY := basicEnemy.Collision.Center()
+		pX, pY := tPlayer.Collision.Center()
+
+		r.DrawLine(int(enX), int(enY), int(pX), int(pY), distanceColor)
 
 		tPlane.Draw()
 		tPlayer.Draw()

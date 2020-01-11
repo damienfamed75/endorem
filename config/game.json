@@ -17,6 +17,7 @@
         "addedHealth": 0,
         "moveSpeedMultiplier": 1,
         "attackTimer": 250,
-        "invincibleTimer": 1000
+        "invincibleTimer": 1000,
+        "waitTime": 1000
     }
 }
