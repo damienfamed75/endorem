@@ -1,6 +1,8 @@
 package player
 
 import (
+	"log"
+
 	"github.com/SolarLune/resolv/resolv"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
@@ -10,7 +12,7 @@ type Player struct {
 	Space  *resolv.Space
 	Sprite r.Texture2D
 
-	inAir bool
+	onGround bool
 }
 
 func NewPlayer() *Player {
@@ -34,8 +36,19 @@ func (p *Player) MovePlayer() {
 		p.Space.Move(-1, 0)
 	}
 	//Improve Jump
-	if r.IsKeyPressed(r.KeySpace) {
-		p.Space.Move(0, -5)
+
+	if r.IsKeyPressed(r.KeySpace) && p.onGround {
+		p.Space.Move(0, -20)
+		log.Print(p.onGround)
+	}
+}
+
+func (p *Player) CheckInAir(ground *resolv.Space) {
+	if p.Space.IsColliding(ground) {
+		p.onGround = true
+	} else {
+		p.onGround = false
+		p.Space.Move(0, 1)
 	}
 }
 

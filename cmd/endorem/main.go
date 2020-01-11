@@ -12,10 +12,11 @@ func main() {
 
 	tPlane := testing.NewPlane()
 	tPlayer := player.NewPlayer()
-
+	r.SetTargetFPS(60)
 	for !r.WindowShouldClose() {
 		//Player
 		tPlayer.MovePlayer()
+		tPlayer.CheckInAir(tPlane.Space)
 
 		//Drawing
 		r.BeginDrawing()
