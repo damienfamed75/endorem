@@ -17,43 +17,46 @@ type Player struct {
 	Hitbox    *resolv.Rectangle
 	Health    int
 	IsDead    bool
+	Facing    common.Direction
 
 	SpeedX float32
 	SpeedY float32
 
 	onGround        bool
 	isAttacking     bool
-	state           string
 	deathFunc       func()
 	healthBefore    time.Time
+	attackBefore    time.Time
+	attackTimer     time.Duration
 	invincibleTimer time.Duration
+	state           common.State
 
 	*resolv.Space
+}
+
+func setupPlayer() *Player {
+	return &Player{
+		Sprite:          r.LoadTexture("assets/playerTest.png"),
+		Space:           resolv.NewSpace(),
+		Facing:          common.Right,
+		Health:          3,
+		healthBefore:    time.Now(),
+		attackBefore:    time.Now(),
+		attackTimer:     time.Duration(common.GlobalConfig.Player.AttackTimer),
+		invincibleTimer: time.Duration(common.GlobalConfig.Player.InvincibleTimer),
+		state:           common.StateIdle,
+	}
 }
 
 // NewPlayer creates a player struct, loading the player sprite texture and generates
 // the collision space for the player
 func NewPlayer(x, y int, deathFunc func()) *Player {
-	// spr := r.LoadTexture("assets/playerTest.png")
-	// playerSpace := resolv.NewSpace()
+	p := setupPlayer()
 
-	// playerSpace.Add(
-	// 	resolv.NewRectangle(0, 468, spr.Width, spr.Height),
-	// )
-	// return &Player{
-	// 	Collision: playerSpace,
-	// 	Sprite:    spr,
-	// }
-	p := &Player{
-		Sprite:          r.LoadTexture("assets/playerTest.png"),
-		Space:           resolv.NewSpace(),
-		Health:          3,
-		healthBefore:    time.Now(),
-		invincibleTimer: time.Duration(common.GlobalConfig.Player.InvincibleTimer),
-		deathFunc:       deathFunc,
-		state:           common.StateIdle,
-	}
+	// Set the death function that'll be called when the player dies.
+	p.deathFunc = deathFunc
 
+	// Setup collision and trigger boxes for the player.
 	p.Collision = resolv.NewRectangle(
 		int32(x), int32(y),
 		p.Sprite.Width, p.Sprite.Height,
@@ -62,10 +65,13 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 	p.Hitbox = resolv.NewRectangle(
 		0, 0, p.Sprite.Height, p.Sprite.Width,
 	)
-	p.Hitbox.SetData(HitboxData)
+
+	// Set all spaces to have self referencial data.
+	p.SetData(p)
+	// Set the hurtbox to store differing data.
 	p.Collision.SetData(HurtboxData)
 
-	//Add to collision boxes to player space.
+	// Add to collision boxes to player space.
 	p.Add(p.Collision)
 
 	return p
@@ -92,10 +98,12 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 
 	if r.IsKeyDown(r.KeyD) {
 		p.SpeedX += accel
+		p.Facing = common.Right
 		p.state = common.StateRight
 	}
 	if r.IsKeyDown(r.KeyA) {
 		p.SpeedX -= accel
+		p.Facing = common.Left
 		p.state = common.StateLeft
 	}
 
@@ -152,18 +160,34 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 }
 
 func (p *Player) checkAttack() {
+	// If the last attack was performed too little of time ago then return.
+	if time.Since(p.attackBefore) <= time.Millisecond*p.attackTimer {
+		return
+	}
+
 	// Attacking
 	if r.IsMouseButtonPressed(r.MouseLeftButton) {
 		// Re-add hurtbox to the enemy space and set position to enemy.
-		p.Hitbox.SetXY(p.Collision.X, p.Collision.Y+p.Collision.H/3.0)
-		p.Add(p.Hitbox)
-		p.isAttacking = true
-		p.state = common.StateAttack
+		p.attack()
 	} else {
 		// Remove hurtbox from enemy space.
 		p.Remove(p.Hitbox)
 		p.isAttacking = false
 	}
+}
+
+func (p *Player) attack() {
+	// Based on the direction the player is facing, set the position of the
+	// hitbox in front of the player.
+	if p.Facing == common.Left {
+		p.Hitbox.SetXY(p.Collision.X-(p.Hitbox.W/2), p.Collision.Y+p.Collision.H/3.0)
+	} else {
+		p.Hitbox.SetXY(p.Collision.X, p.Collision.Y+p.Collision.H/3.0)
+	}
+
+	p.attackBefore = time.Now() // Reset timer
+	p.Add(p.Hitbox)
+	p.isAttacking = true
 }
 
 func (p *Player) Update(ground *resolv.Space) (r.Vector2, r.Vector2) {
@@ -214,8 +238,13 @@ func (p *Player) debugDraw() {
 	)
 	// Draw state.
 	r.DrawText(
-		p.state,
+		p.state.String(),
 		int(p.Collision.X), int(p.Collision.Y+p.Collision.H), 10,
+		r.White,
+	)
+	r.DrawText(
+		p.Facing.String(),
+		int(p.Collision.X), int(p.Collision.Y+p.Collision.H+10), 10,
 		r.White,
 	)
 

@@ -26,7 +26,7 @@ type Basic struct {
 	AttackZone      *resolv.Rectangle
 	Hitbox          *resolv.Rectangle
 
-	state           string
+	state           common.State
 	isAttacking     bool
 	speedMultiplier float32   // Multiplier of the enemy's horizontal movement.
 	attackBefore    time.Time // How often the enemy can attack (milliseconds)
@@ -158,7 +158,6 @@ func (b *Basic) Update() {
 			// Re-add hurtbox to the enemy space and set position to enemy.
 			b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
 			b.Add(b.Hitbox)
-			b.state = common.StateAttack
 		} else {
 			// Remove hurtbox from enemy space.
 			b.Remove(b.Hitbox)
@@ -197,7 +196,7 @@ func (b *Basic) debugDraw() {
 	)
 	// Draw state.
 	r.DrawText(
-		b.state,
+		b.state.String(),
 		int(b.Collision.X), int(b.Collision.Y+b.Collision.H), 10,
 		r.White,
 	)
