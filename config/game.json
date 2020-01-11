@@ -1,0 +1,24 @@
+{
+    "game": {
+        "screen": {
+            "width": 800,
+            "height": 600
+        },
+        "volume": 100
+    },
+    "player": {
+        "addedHealth": 0,
+        "jumpHeight": 10,
+        "moveSpeed": 10,
+        "attackTimer": 250,
+        "invincibleTimer": 1000
+    },
+    "enemy": {
+        "addedHealth": 0,
+        "moveSpeedMultiplier": 1,
+        "attackTimer": 250,
+        "invincibleTimer": 1000,
+        "waitTime": 1000,
+        "visionDistance": 250
+    }
+}
