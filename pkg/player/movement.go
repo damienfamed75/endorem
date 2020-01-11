@@ -69,7 +69,7 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 	friction := float32(0.5)
 	accel := 0.5 + friction
 
-	maxSpd := float32(3)
+	maxSpd := float32(1)
 
 	if p.SpeedX > friction {
 		p.SpeedX -= friction
@@ -95,10 +95,10 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 	x := int32(p.SpeedX)
 	//y := int32(p.SpeedY)
 
-	if res := ground.Resolve(p.Collision, x, 0); res.Colliding() {
-		x = res.ResolveX
-		p.SpeedX = 0
-	}
+	// if res := ground.Resolve(p.Collision, x, 0); res.Colliding() {
+	// 	x = res.ResolveX
+	// 	p.SpeedX = 0
+	// }
 
 	p.Collision.X += x
 
