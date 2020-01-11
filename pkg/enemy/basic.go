@@ -1,6 +1,7 @@
 package enemy
 
 import (
+	"log"
 	"strconv"
 	"time"
 
@@ -12,16 +13,18 @@ import (
 
 // Basic is a testing enemy that is very basic in attacks and features.
 type Basic struct {
-	Health       int
-	SpeedX       float32
-	SpeedY       float32
-	IsDead       bool
-	Origin       r.Vector2
-	Destinations [2]r.Vector2 // left and right destinations
-	Sprite       r.Texture2D
-	Collision    *resolv.Rectangle
-	AttackZone   *resolv.Rectangle
-	Hitbox       *resolv.Rectangle
+	Health          int
+	SpeedX          float32
+	SpeedY          float32
+	Direction       int8
+	IsDead          bool
+	Origin          r.Vector2
+	Destinations    [2]r.Vector2 // left and right destinations
+	LastDestination int
+	Sprite          r.Texture2D
+	Collision       *resolv.Rectangle
+	AttackZone      *resolv.Rectangle
+	Hitbox          *resolv.Rectangle
 
 	state           string
 	isAttacking     bool
@@ -39,6 +42,7 @@ func setupBasic() *Basic {
 		Sprite:          r.LoadTexture("assets/basicenemy.png"),
 		Space:           resolv.NewSpace(),
 		Health:          2 + common.GlobalConfig.Enemy.AddedHealth,
+		Direction:       1,
 		state:           common.StateIdle,
 		speedMultiplier: common.GlobalConfig.Enemy.MoveSpeedMultiplier,
 		attackTimer:     time.Duration(common.GlobalConfig.Enemy.AttackTimer),
@@ -105,9 +109,43 @@ func NewBasic(x, y int) *Basic {
 
 	return b
 }
+func (b *Basic) move() {
+	friction := float32(0.5)
+	accel := (0.5 + friction) * float32(b.Direction)
+
+	maxSpd := float32(1)
+	if b.SpeedX > friction {
+		b.SpeedX -= friction
+	} else if b.SpeedX < -friction {
+		b.SpeedX += friction
+	} else {
+		b.SpeedX = 0
+	}
+
+	// if met destination on X, turn around
+	for i, d := range b.Destinations {
+		if b.Collision.X == int32(d.X) && b.LastDestination != i {
+			b.Direction *= -1
+			b.LastDestination = i
+			log.Print("Destination MET!")
+		}
+	}
+	b.SpeedX += accel
+
+	if b.SpeedX > maxSpd {
+		b.SpeedX = maxSpd
+	}
+	if b.SpeedX < -maxSpd {
+		b.SpeedX = -maxSpd
+	}
+
+	x := int32(b.SpeedX)
+	b.Collision.X += x
+}
 
 // Update is non drawing related functionality with the enemy.
 func (b *Basic) Update() {
+	b.move()
 	// Debugging:
 	// Timer for attacks every half second.
 	if time.Since(b.attackBefore) >= time.Millisecond*b.attackTimer {
