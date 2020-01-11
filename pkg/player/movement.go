@@ -15,13 +15,13 @@ type Player struct {
 
 func NewPlayer() *Player {
 	spr := r.LoadTexture("assets/playerTest.png")
-	playerCol := resolv.NewSpace()
+	playerSpace := resolv.NewSpace()
 
-	playerCol.Add(
+	playerSpace.Add(
 		resolv.NewRectangle(0, 468, spr.Width, spr.Height),
 	)
 	return &Player{
-		Space:  playerCol,
+		Space:  playerSpace,
 		Sprite: spr,
 	}
 }
