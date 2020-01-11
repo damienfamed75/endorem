@@ -14,14 +14,16 @@ func main() {
 	tPlayer := player.NewPlayer()
 
 	for !r.WindowShouldClose() {
+		//Player
+		tPlayer.MovePlayer()
+
+		//Drawing
 		r.BeginDrawing()
 		r.ClearBackground(r.Black)
 
 		r.DrawText("Endorem hello", 20, 20, 40, r.GopherBlue)
 
 		tPlane.Draw()
-
-		tPlayer.MovePlayer()
 		tPlayer.Draw()
 
 		r.EndDrawing()

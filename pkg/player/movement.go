@@ -7,43 +7,41 @@ import (
 
 // Player is the standard character collision and image
 type Player struct {
-	Collision *resolv.Rectangle
-	Sprite    r.Texture2D
+	Space  *resolv.Space
+	Sprite r.Texture2D
 
-	x int
-	y int
+	inAir bool
 }
 
 func NewPlayer() *Player {
-	spr := r.LoadTexture("/assets/playerTest.png")
+	spr := r.LoadTexture("assets/playerTest.png")
+	playerCol := resolv.NewSpace()
+
+	playerCol.Add(
+		resolv.NewRectangle(0, 468, spr.Width, spr.Height),
+	)
 	return &Player{
-		Collision: resolv.NewRectangle(0, 500, spr.Width, spr.Height),
-		Sprite:    spr,
-		x:         500,
-		y:         500,
+		Space:  playerCol,
+		Sprite: spr,
 	}
 }
 
 func (p *Player) MovePlayer() {
 	if r.IsKeyDown(r.KeyD) {
-		p.x += 2.0
+		p.Space.Move(1, 0)
 	}
 	if r.IsKeyDown(r.KeyA) {
-		p.x -= 2.0
+		p.Space.Move(-1, 0)
+	}
+	//Improve Jump
+	if r.IsKeyPressed(r.KeySpace) {
+		p.Space.Move(0, -5)
 	}
 }
 
 // Draw creates a rectangle using Raylib and draws the outline of it.
 func (p *Player) Draw() {
 	//p.Collision.SetXY()
-
-	r.DrawTexture(p.Sprite, p.x, p.y, r.White)
-
-	r.DrawRectangleLines(
-		p.x,
-		p.y,
-		100,
-		100,
-		r.White,
-	)
+	x, y := p.Space.GetXY()
+	r.DrawTexture(p.Sprite, int(x), int(y), r.White)
 }
