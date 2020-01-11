@@ -2,7 +2,8 @@
     "player": {
         "addedHealth": 0,
         "jumpHeight": 10,
-        "moveSpeed": 10
+        "moveSpeed": 10,
+        "attackTimer": 250
     },
     "enemy": {
         "addedHealth": 0,

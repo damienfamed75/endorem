@@ -15,6 +15,7 @@ type Config struct {
 		AddedHealth int   `json:"addedHealth"`
 		JumpHeight  int32 `json:"jumpHeight"`
 		MoveSpeed   int32 `json:"moveSpeed"`
+		AttackTimer int   `json:"attackTimer"` // milliseconds
 	} `json:"person"`
 	Enemy struct {
 		AddedHealth         int     `json:"addedHealth"`
