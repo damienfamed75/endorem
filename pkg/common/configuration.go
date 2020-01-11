@@ -20,11 +20,12 @@ type Config struct {
 	} `json:"game"`
 
 	Player struct {
-		AddedHealth int   `json:"addedHealth"`
-		JumpHeight  int32 `json:"jumpHeight"`
-		MoveSpeed   int32 `json:"moveSpeed"`
-		AttackTimer int   `json:"attackTimer"` // milliseconds
-	} `json:"person"`
+		AddedHealth     int   `json:"addedHealth"`
+		JumpHeight      int32 `json:"jumpHeight"`
+		MoveSpeed       int32 `json:"moveSpeed"`
+		AttackTimer     int   `json:"attackTimer"`     // milliseconds
+		InvincibleTimer int   `json:"invincibleTimer"` // milliseconds
+	} `json:"player"`
 
 	Enemy struct {
 		AddedHealth         int     `json:"addedHealth"`

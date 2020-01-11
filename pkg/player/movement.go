@@ -1,10 +1,11 @@
 package player
 
 import (
-	"log"
 	"strconv"
+	"time"
 
 	"github.com/SolarLune/resolv/resolv"
+	"github.com/damienfamed75/endorem/pkg/common"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -20,15 +21,19 @@ type Player struct {
 	SpeedX float32
 	SpeedY float32
 
-	onGround    bool
-	isAttacking bool
+	onGround        bool
+	isAttacking     bool
+	state           string
+	deathFunc       func()
+	healthBefore    time.Time
+	invincibleTimer time.Duration
 
 	*resolv.Space
 }
 
 // NewPlayer creates a player struct, loading the player sprite texture and generates
 // the collision space for the player
-func NewPlayer(x, y int) *Player {
+func NewPlayer(x, y int, deathFunc func()) *Player {
 	// spr := r.LoadTexture("assets/playerTest.png")
 	// playerSpace := resolv.NewSpace()
 
@@ -40,9 +45,13 @@ func NewPlayer(x, y int) *Player {
 	// 	Sprite:    spr,
 	// }
 	p := &Player{
-		Sprite: r.LoadTexture("assets/playerTest.png"),
-		Space:  resolv.NewSpace(),
-		Health: 3,
+		Sprite:          r.LoadTexture("assets/playerTest.png"),
+		Space:           resolv.NewSpace(),
+		Health:          3,
+		healthBefore:    time.Now(),
+		invincibleTimer: time.Duration(common.GlobalConfig.Player.InvincibleTimer),
+		deathFunc:       deathFunc,
+		state:           "idle",
 	}
 
 	p.Collision = resolv.NewRectangle(
@@ -81,9 +90,11 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 
 	if r.IsKeyDown(r.KeyD) {
 		p.SpeedX += accel
+		p.state = "right"
 	}
 	if r.IsKeyDown(r.KeyA) {
 		p.SpeedX -= accel
+		p.state = "left"
 	}
 
 	if p.SpeedX > maxSpd {
@@ -111,7 +122,7 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 	// Changes to crouch sprite and hurtboxes
 	if r.IsKeyDown(r.KeyS) {
 		//TODO
-		log.Print("Woah you are crouching")
+		p.state = "crouching"
 	} else {
 		//TODO
 	}
@@ -124,6 +135,7 @@ func (p *Player) checkAttack() {
 		p.Hitbox.SetXY(p.Collision.X, p.Collision.Y+p.Collision.H/3.0)
 		p.Add(p.Hitbox)
 		p.isAttacking = true
+		p.state = "attacking"
 	} else {
 		// Remove hurtbox from enemy space.
 		p.Remove(p.Hitbox)
@@ -137,12 +149,15 @@ func (p *Player) checkInAir(ground *resolv.Space) {
 	if p.Collision.IsColliding(ground) {
 		p.onGround = true
 	} else {
+		p.state = "falling"
 		p.onGround = false
 		p.Collision.Move(0, 1)
 	}
 }
 
 func (p *Player) Update(ground *resolv.Space) {
+	p.state = "idle"
+
 	p.movePlayer(ground)
 	p.checkAttack()
 	p.checkInAir(ground)
@@ -158,9 +173,16 @@ func (p *Player) Draw() {
 }
 
 func (p *Player) TakeDamage() {
-	p.Health--
-	if p.Health <= 0 {
-		p.IsDead = true
+	// The player has their invincibility frames, and if they have run out of
+	// time of that then they can take more damage.
+	if time.Since(p.healthBefore) >= time.Millisecond*p.invincibleTimer {
+		p.healthBefore = time.Now()
+
+		p.Health--
+		if p.Health <= 0 {
+			p.deathFunc()
+			p.state = "dead" // :c
+		}
 	}
 }
 
@@ -171,6 +193,13 @@ func (p *Player) debugDraw() {
 		int(p.Collision.X), int(p.Collision.Y-(p.Collision.W/2)), 10,
 		r.White,
 	)
+	// Draw state.
+	r.DrawText(
+		p.state,
+		int(p.Collision.X), int(p.Collision.Y+p.Collision.H), 10,
+		r.White,
+	)
+
 	r.DrawRectangleLines(
 		int(p.Collision.X), int(p.Collision.Y),
 		int(p.Collision.W), int(p.Collision.H),
