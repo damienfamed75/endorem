@@ -11,29 +11,41 @@ import (
 
 // Basic is a testing enemy that is very basic in attacks and features.
 type Basic struct {
-	Health     uint8
+	Health     int
+	SpeedX     float32
+	SpeedY     float32
 	Sprite     r.Texture2D
 	Collision  *resolv.Rectangle
 	AttackZone *resolv.Rectangle
 	Hurtbox    *resolv.Rectangle
 
-	begin       time.Time
-	isAttacking bool
+	begin           time.Time
+	isAttacking     bool
+	speedMultiplier float32
 
 	*resolv.Space
 }
 
+func setupBasic() *Basic {
+	return &Basic{
+		Sprite:          r.LoadTexture("assets/basicenemy.png"),
+		Space:           resolv.NewSpace(),
+		Health:          2 + common.GlobalConfiguration.Enemy.AddedHealth,
+		speedMultiplier: common.GlobalConfiguration.Enemy.MoveSpeedMultiplier,
+	}
+}
+
 func NewBasic(x, y int) *Basic {
+	b := setupBasic()
+
 	var (
+		// These variables are only used when instantiating a new enemy so they
+		// do not belong in the enemy's structure, and since it's only used in
+		// this particular enemy at the moment, they are not variables in the
+		// configuration file yet.
 		attackZoneWidth  int32 = 2
 		attackZoneHeight int32 = 2
 	)
-
-	b := &Basic{
-		Sprite: r.LoadTexture("assets/basicenemy.png"),
-		Space:  resolv.NewSpace(),
-		Health: 2,
-	}
 
 	// Set the hit and hurt boxes.
 	b.Collision = resolv.NewRectangle(
@@ -61,11 +73,13 @@ func NewBasic(x, y int) *Basic {
 	b.Collision.AddTags(common.TagEnemy)
 	b.Hurtbox.AddTags(common.TagEnemy)
 
+	// DEBUG - timer for enemy's attack atm. Will be removed.
 	b.begin = time.Now()
 
 	return b
 }
 
+// Update is non drawing related functionality with the enemy.
 func (b *Basic) Update() {
 	// Debugging:
 	// Timer for attacks every half second.
@@ -86,11 +100,12 @@ func (b *Basic) Update() {
 	}
 }
 
+// Draw is used for raylib exclusive drawing function calls.
 func (b *Basic) Draw() {
 	// Draw the enemy texture.
 	r.DrawTexture(b.Sprite, int(b.Collision.X), int(b.Collision.Y), r.White)
 
-	b.debugDraw()
+	b.debugDraw() //DEBUG
 }
 
 func (b *Basic) debugDraw() {
