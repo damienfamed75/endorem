@@ -15,14 +15,12 @@ func main() {
 	r.SetTargetFPS(60)
 
 	tPlane := testing.NewPlane()
-	tPlayer := player.NewPlayer()
+	tPlayer := player.NewPlayer(0, 468)
 	basicEnemy := enemy.NewBasic(100, 450)
 
 	for !r.WindowShouldClose() {
-		//Player
-		tPlayer.MovePlayer()
-		tPlayer.CheckInAir(tPlane.Space)
 
+		tPlayer.Update(tPlane.Space)
 		basicEnemy.Update()
 
 		r.BeginDrawing()
