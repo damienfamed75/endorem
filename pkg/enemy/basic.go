@@ -39,7 +39,7 @@ func setupBasic() *Basic {
 		Sprite:          r.LoadTexture("assets/basicenemy.png"),
 		Space:           resolv.NewSpace(),
 		Health:          2 + common.GlobalConfig.Enemy.AddedHealth,
-		state:           "idle",
+		state:           common.StateIdle,
 		speedMultiplier: common.GlobalConfig.Enemy.MoveSpeedMultiplier,
 		attackTimer:     time.Duration(common.GlobalConfig.Enemy.AttackTimer),
 		attackBefore:    time.Now(),
@@ -108,11 +108,11 @@ func (b *Basic) Update() {
 			// Re-add hurtbox to the enemy space and set position to enemy.
 			b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
 			b.Add(b.Hitbox)
-			b.state = "attacking"
+			b.state = common.StateAttack
 		} else {
 			// Remove hurtbox from enemy space.
 			b.Remove(b.Hitbox)
-			b.state = "idle"
+			b.state = common.StateIdle
 		}
 	}
 }
@@ -132,7 +132,7 @@ func (b *Basic) TakeDamage() {
 		b.Health--
 		if b.Health <= 0 {
 			b.IsDead = true
-			b.state = "dead"
+			b.state = common.StateDead
 			b.Clear()
 		}
 	}

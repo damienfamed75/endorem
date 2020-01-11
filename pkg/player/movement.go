@@ -51,7 +51,7 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 		healthBefore:    time.Now(),
 		invincibleTimer: time.Duration(common.GlobalConfig.Player.InvincibleTimer),
 		deathFunc:       deathFunc,
-		state:           "idle",
+		state:           common.StateIdle,
 	}
 
 	p.Collision = resolv.NewRectangle(
@@ -92,11 +92,11 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 
 	if r.IsKeyDown(r.KeyD) {
 		p.SpeedX += accel
-		p.state = "right"
+		p.state = common.StateRight
 	}
 	if r.IsKeyDown(r.KeyA) {
 		p.SpeedX -= accel
-		p.state = "left"
+		p.state = common.StateLeft
 	}
 
 	if p.SpeedX > maxSpd {
@@ -109,9 +109,6 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 	// Jumping
 	down := ground.Resolve(p.Collision, 0, 4)
 	onGround := down.Colliding()
-	if !onGround {
-		p.state = "in air"
-	}
 
 	if r.IsKeyPressed(r.KeyW) && onGround {
 		p.SpeedY = -8
@@ -146,7 +143,7 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 	// Changes to crouch sprite and hurtboxes
 	if r.IsKeyDown(r.KeyS) {
 		//TODO
-		p.state = "crouching"
+		p.state = common.StateCrouch
 	} else {
 		//TODO
 	}
@@ -159,7 +156,7 @@ func (p *Player) checkAttack() {
 		p.Hitbox.SetXY(p.Collision.X, p.Collision.Y+p.Collision.H/3.0)
 		p.Add(p.Hitbox)
 		p.isAttacking = true
-		p.state = "attacking"
+		p.state = common.StateAttack
 	} else {
 		// Remove hurtbox from enemy space.
 		p.Remove(p.Hitbox)
@@ -168,7 +165,7 @@ func (p *Player) checkAttack() {
 }
 
 func (p *Player) Update(ground *resolv.Space) {
-	p.state = "idle"
+	p.state = common.StateIdle
 
 	p.movePlayer(ground)
 	p.checkAttack()
@@ -193,12 +190,18 @@ func (p *Player) TakeDamage() {
 		p.Health--
 		if p.Health <= 0 {
 			p.deathFunc()
-			p.state = "dead" // :c
+			p.state = common.StateDead // :c
 		}
 	}
 }
 
 func (p *Player) debugDraw() {
+	if p.SpeedY < 0 {
+		p.state = common.StateJumping
+	} else if p.SpeedY > 0 {
+		p.state = common.StateFalling
+	}
+
 	// Draw health.
 	r.DrawText(
 		"HP: "+strconv.Itoa(p.Health),
