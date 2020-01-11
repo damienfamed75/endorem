@@ -9,11 +9,15 @@ import (
 )
 
 func main() {
-	r.InitWindow(800, 600, "Endorem")
-	defer r.CloseWindow()
-
 	// Load in the global configuration for all future items to reference.
 	common.LoadConfig()
+
+	r.InitWindow(
+		common.GlobalConfig.ScreenWidth(),
+		common.GlobalConfig.ScreenHeight(),
+		"Endorem",
+	)
+	defer r.CloseWindow()
 
 	tPlane := testing.NewPlane()
 

@@ -33,9 +33,9 @@ func setupBasic() *Basic {
 	return &Basic{
 		Sprite:          r.LoadTexture("assets/basicenemy.png"),
 		Space:           resolv.NewSpace(),
-		Health:          2 + common.GlobalConfiguration.Enemy.AddedHealth,
-		speedMultiplier: common.GlobalConfiguration.Enemy.MoveSpeedMultiplier,
-		attackTimer:     time.Duration(common.GlobalConfiguration.Enemy.AttackTimer),
+		Health:          2 + common.GlobalConfig.Enemy.AddedHealth,
+		speedMultiplier: common.GlobalConfig.Enemy.MoveSpeedMultiplier,
+		attackTimer:     time.Duration(common.GlobalConfig.Enemy.AttackTimer),
 	}
 }
 
