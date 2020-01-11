@@ -12,8 +12,9 @@ import (
 // how the variables are laid out in it.
 type Config struct {
 	Game struct {
-		Volume int `json:"volume"`
-		Screen struct {
+		Volume       int    `json:"volume"`
+		DefaultScene string `json:"defaultScene"`
+		Screen       struct {
 			Width  int `json:"width"`
 			Height int `json:"height"`
 		} `json:"screen"`

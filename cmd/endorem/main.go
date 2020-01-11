@@ -36,7 +36,7 @@ func main() {
 	r.SetTargetFPS(60)
 
 	// Choose default scene.
-	g.Start("testing scene")
+	g.Start(common.GlobalConfig.Game.DefaultScene)
 
 	// Game loop
 	for !r.WindowShouldClose() {
