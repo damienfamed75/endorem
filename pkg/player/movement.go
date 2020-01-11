@@ -72,7 +72,7 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 }
 
 // movePlayer handles key binded events involving the movement of the character
-func (p *Player) movePlayer(ground *resolv.Space) {
+func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 
 	// Left/Right Movement
 	p.SpeedY += 0.5
@@ -147,6 +147,8 @@ func (p *Player) movePlayer(ground *resolv.Space) {
 	} else {
 		//TODO
 	}
+
+	return r.NewVector2(float32(x), float32(y))
 }
 
 func (p *Player) checkAttack() {
@@ -164,12 +166,14 @@ func (p *Player) checkAttack() {
 	}
 }
 
-func (p *Player) Update(ground *resolv.Space) {
+func (p *Player) Update(ground *resolv.Space) (r.Vector2, r.Vector2) {
 	p.state = common.StateIdle
 
-	p.movePlayer(ground)
+	diff := p.movePlayer(ground)
 	p.checkAttack()
 	//p.checkInAir(ground)
+
+	return diff, r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
 }
 
 // Draw creates a rectangle using Raylib and draws the outline of it.
