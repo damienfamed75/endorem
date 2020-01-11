@@ -1,6 +1,7 @@
 package enemy
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/damienfamed75/endorem/pkg/common"
@@ -14,12 +15,14 @@ type Basic struct {
 	Health     int
 	SpeedX     float32
 	SpeedY     float32
+	IsDead     bool
 	Sprite     r.Texture2D
 	Collision  *resolv.Rectangle
 	AttackZone *resolv.Rectangle
 	Hitbox     *resolv.Rectangle
 
 	begin       time.Time
+	state       string
 	isAttacking bool
 	// Multiplier of the enemy's horizontal movement.
 	speedMultiplier float32
@@ -34,6 +37,7 @@ func setupBasic() *Basic {
 		Sprite:          r.LoadTexture("assets/basicenemy.png"),
 		Space:           resolv.NewSpace(),
 		Health:          2 + common.GlobalConfig.Enemy.AddedHealth,
+		state:           "idle",
 		speedMultiplier: common.GlobalConfig.Enemy.MoveSpeedMultiplier,
 		attackTimer:     time.Duration(common.GlobalConfig.Enemy.AttackTimer),
 	}
@@ -73,6 +77,7 @@ func NewBasic(x, y int) *Basic {
 
 	// Add the collision boxes to the enemy space.
 	b.Add(b.Collision, b.AttackZone)
+	b.SetData(b)
 
 	// Tag this enemy as an enemy.
 	b.Collision.AddTags(common.TagEnemy)
@@ -98,9 +103,11 @@ func (b *Basic) Update() {
 			// Re-add hurtbox to the enemy space and set position to enemy.
 			b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
 			b.Add(b.Hitbox)
+			b.state = "attacking"
 		} else {
 			// Remove hurtbox from enemy space.
 			b.Remove(b.Hitbox)
+			b.state = "idle"
 		}
 	}
 }
@@ -113,7 +120,28 @@ func (b *Basic) Draw() {
 	b.debugDraw() //DEBUG
 }
 
+func (b *Basic) TakeDamage() {
+	b.Health--
+	if b.Health <= 0 {
+		b.IsDead = true
+		b.Clear()
+	}
+}
+
 func (b *Basic) debugDraw() {
+	// Draw health.
+	r.DrawText(
+		"HP: "+strconv.Itoa(b.Health),
+		int(b.Collision.X), int(b.Collision.Y-(b.Collision.W/2)), 10,
+		r.White,
+	)
+	// Draw state.
+	r.DrawText(
+		b.state,
+		int(b.Collision.X), int(b.Collision.Y+b.Collision.H), 10,
+		r.White,
+	)
+
 	// Draw the collision box for debugging reasons.
 	r.DrawRectangleLines(
 		int(b.Collision.X), int(b.Collision.Y),

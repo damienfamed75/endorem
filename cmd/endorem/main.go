@@ -13,6 +13,8 @@ func main() {
 	// Load in the global configuration for all future items to reference.
 	common.LoadConfig()
 
+	game := NewGame()
+
 	r.InitWindow(
 		common.GlobalConfig.ScreenWidth(),
 		common.GlobalConfig.ScreenHeight(),
@@ -24,12 +26,22 @@ func main() {
 
 	tPlane := testing.NewPlane()
 	tPlayer := player.NewPlayer(0, 468)
-	basicEnemy := enemy.NewBasic(100, 450)
+	basicEnemy := enemy.NewBasic(100, 468)
+
+	// Add everything to the world space.
+	game.world.Add(tPlane, tPlayer, basicEnemy)
 
 	for !r.WindowShouldClose() {
 
 		tPlayer.Update(tPlane.Space)
 		basicEnemy.Update()
+
+		// enemies := game.world.FilterByTags("enemy")
+
+		// Player has been touched by an enemy.
+		// if enemies.IsColliding(tPlayer) {
+		// 	tPlayer.TakeDamage()
+		// }
 
 		r.BeginDrawing()
 		r.ClearBackground(r.Black)
