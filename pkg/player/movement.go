@@ -7,7 +7,8 @@ import (
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
-// Player is the standard character collision and image
+// Player is the standard playable character, including functions that allow
+// for movement and action
 type Player struct {
 	Space  *resolv.Space
 	Sprite r.Texture2D
@@ -15,6 +16,8 @@ type Player struct {
 	onGround bool
 }
 
+// NewPlayer creates a player struct, loading the player sprite texture and generates
+// the collision space for the player
 func NewPlayer() *Player {
 	spr := r.LoadTexture("assets/playerTest.png")
 	playerSpace := resolv.NewSpace()
@@ -28,6 +31,7 @@ func NewPlayer() *Player {
 	}
 }
 
+// MovePlayer handles key binded events involving the movement of the character
 func (p *Player) MovePlayer() {
 	if r.IsKeyDown(r.KeyD) {
 		p.Space.Move(1, 0)
@@ -35,14 +39,24 @@ func (p *Player) MovePlayer() {
 	if r.IsKeyDown(r.KeyA) {
 		p.Space.Move(-1, 0)
 	}
-	//Improve Jump
 
-	if r.IsKeyPressed(r.KeySpace) && p.onGround {
+	// Jumping
+	if r.IsKeyPressed(r.KeyW) && p.onGround {
 		p.Space.Move(0, -20)
-		log.Print(p.onGround)
+	}
+
+	// Crouching
+	// Changes to crouch sprite and hurtboxes
+	if r.IsKeyDown(r.KeyS) {
+		//TODO
+		log.Print("Woah you are crouching")
+	} else {
+		//TODO
 	}
 }
 
+//CheckInAir determines if the player is colliding with the ground, and if not they will
+// fall towards the ground
 func (p *Player) CheckInAir(ground *resolv.Space) {
 	if p.Space.IsColliding(ground) {
 		p.onGround = true
@@ -57,4 +71,10 @@ func (p *Player) Draw() {
 	//p.Collision.SetXY()
 	x, y := p.Space.GetXY()
 	r.DrawTexture(p.Sprite, int(x), int(y), r.White)
+
+	p.debugDraw()
+}
+
+func (p *Player) debugDraw() {
+
 }
