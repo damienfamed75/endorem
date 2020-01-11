@@ -1,8 +1,7 @@
-package main
+package common
 
 import (
 	"github.com/SolarLune/resolv/resolv"
-	"github.com/damienfamed75/endorem/pkg/common"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -18,7 +17,7 @@ type EndoCamera struct {
 func NewEndoCamera(playerColl *resolv.Rectangle) *EndoCamera {
 	// Get the center coordinates of the player collision
 	xOff, yOff := playerColl.Center()
-	defaultZoom := common.GlobalConfig.Game.Camera.DefaultZoom
+	defaultZoom := GlobalConfig.Game.Camera.DefaultZoom
 	offsetMultiplier := defaultZoom - 0.5 // 0.5 tries to center the Y of cam
 	return &EndoCamera{
 		Camera2D: r.Camera2D{
@@ -29,7 +28,7 @@ func NewEndoCamera(playerColl *resolv.Rectangle) *EndoCamera {
 			Rotation: 0,
 			Zoom:     defaultZoom,
 		},
-		LerpAmount: common.GlobalConfig.Game.Camera.DefaultSpeed,
+		LerpAmount: GlobalConfig.Game.Camera.DefaultSpeed,
 	}
 }
 
