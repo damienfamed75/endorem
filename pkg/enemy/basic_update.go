@@ -95,5 +95,4 @@ func (b *Basic) idleWalk() {
 	x := int32(b.SpeedX)
 
 	b.Collision.Move(x, 0)
-	b.AttackZone.Move(x, 0)
 }

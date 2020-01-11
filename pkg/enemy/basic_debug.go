@@ -38,11 +38,6 @@ func (b *Basic) debugDraw() {
 		int(b.Collision.W), int(b.Collision.H),
 		r.Red,
 	)
-	r.DrawRectangleLines(
-		int(b.AttackZone.X), int(b.AttackZone.Y),
-		int(b.AttackZone.W), int(b.AttackZone.H),
-		r.Yellow,
-	)
 
 	enemyCenterBottom := r.NewVector2(
 		float32(b.Collision.X)+float32(b.Collision.W/2),

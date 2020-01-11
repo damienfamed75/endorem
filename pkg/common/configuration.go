@@ -33,6 +33,7 @@ type Config struct {
 		AttackTimer         int     `json:"attackTimer"`     // milliseconds
 		InvincibleTimer     int     `json:"invincibleTimer"` // milliseconds
 		WaitTime            int     `json:"waitTime"`        // milliseconds
+		VisionDistance      int32   `json:"visionDistance"`
 	} `json:"enemy"`
 }
 

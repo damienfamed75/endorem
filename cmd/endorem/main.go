@@ -59,8 +59,8 @@ func main() {
 				// Calculate the distance from the enemy to the player.
 				dist := resolv.Distance(enX, enY, pX, pY)
 
-				t.PlayerSeen = dist < 250
-				t.ShouldAttack = dist < 30
+				t.PlayerSeen = dist < common.GlobalConfig.Enemy.VisionDistance
+				t.ShouldAttack = dist < t.AttackDistance
 
 				// If the hurtbox is colliding a player hitbox then take damage.
 				if t.FilterByTags(enemy.TagHurtbox).IsColliding(tPlayer.Hitbox) {
@@ -75,8 +75,6 @@ func main() {
 		r.BeginDrawing()
 		r.BeginMode2D(r.Camera2D(*cam)) // Begin drawing with camera.
 		r.ClearBackground(r.Black)
-
-		r.DrawText("Endorem hello", 20, 20, 40, r.GopherBlue)
 
 		tPlane.Draw()
 		tPlayer.Draw()

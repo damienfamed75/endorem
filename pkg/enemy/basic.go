@@ -17,13 +17,13 @@ type Basic struct {
 	IsDead          bool
 	PlayerSeen      bool // If the enemy has spotted the enemy.
 	ShouldAttack    bool
+	AttackDistance  int32
 	Facing          common.Direction
 	Origin          r.Vector2
 	Destinations    [2]r.Vector2 // left and right destinations
 	LastDestination int
 	Sprite          r.Texture2D
 	Collision       *resolv.Rectangle
-	AttackZone      *resolv.Rectangle
 	Hitbox          *resolv.Rectangle
 
 	direction          int8
@@ -45,6 +45,7 @@ func setupBasic() *Basic {
 		Sprite:             r.LoadTexture("assets/basicenemy.png"),
 		Space:              resolv.NewSpace(),
 		Health:             2 + common.GlobalConfig.Enemy.AddedHealth,
+		AttackDistance:     30,
 		direction:          1,
 		Facing:             common.Right,
 		state:              common.StateIdle,
@@ -74,41 +75,20 @@ func NewBasic(x, y int) *Basic {
 		),
 	}
 
-	var (
-		// These variables are only used when instantiating a new enemy so they
-		// do not belong in the enemy's structure, and since it's only used in
-		// this particular enemy at the moment, they are not variables in the
-		// configuration file yet.
-		attackZoneWidth  int32 = 2
-		attackZoneHeight int32 = 2
-	)
-
 	// Set the hit and hurt boxes.
 	b.Collision = resolv.NewRectangle(
 		int32(x), int32(y),
 		b.Sprite.Width, b.Sprite.Height,
 	)
-	b.AttackZone = resolv.NewRectangle(
-		int32(x), int32(y),
-		b.Sprite.Height*attackZoneWidth, b.Sprite.Height*attackZoneHeight,
-	)
 	b.Hitbox = resolv.NewRectangle(
 		0, 0, b.Sprite.Height, b.Sprite.Width,
 	)
 
-	// Center the attacking zone to the center of the character.
-	b.AttackZone.Move(
-		int32(float32(-b.Sprite.Width)*(float32(attackZoneWidth)-0.5)),
-		-b.Sprite.Height/2,
-	)
-
 	// Add the collision boxes to the enemy space.
-	b.Add(b.Collision, b.Hitbox, b.AttackZone)
+	b.Add(b.Collision, b.Hitbox)
 	b.SetData(b)
 
 	// Set the hitbox data to be different from the hitbox data.
-	b.AttackZone.SetData(AttackZoneData)
-	b.AttackZone.AddTags(TagAttackZone)
 	b.Collision.AddTags(TagHurtbox)
 	b.Hitbox.SetData(HitboxData)
 
