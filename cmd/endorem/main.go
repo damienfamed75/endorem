@@ -36,12 +36,12 @@ func main() {
 		tPlayer.Update(tPlane.Space)
 		basicEnemy.Update()
 
-		// enemies := game.world.FilterByTags("enemy")
+		enemies := game.world.FilterByTags("enemy")
 
 		// Player has been touched by an enemy.
-		// if enemies.IsColliding(tPlayer) {
-		// 	tPlayer.TakeDamage()
-		// }
+		if enemies.IsColliding(tPlayer) {
+			tPlayer.TakeDamage()
+		}
 
 		r.BeginDrawing()
 		r.ClearBackground(r.Black)

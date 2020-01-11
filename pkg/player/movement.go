@@ -2,6 +2,7 @@ package player
 
 import (
 	"log"
+	"strconv"
 
 	"github.com/SolarLune/resolv/resolv"
 	r "github.com/lachee/raylib-goplus/raylib"
@@ -13,6 +14,8 @@ type Player struct {
 	Sprite    r.Texture2D
 	Collision *resolv.Rectangle
 	Hitbox    *resolv.Rectangle
+	Health    int
+	IsDead    bool
 
 	SpeedX float32
 	SpeedY float32
@@ -39,6 +42,7 @@ func NewPlayer(x, y int) *Player {
 	p := &Player{
 		Sprite: r.LoadTexture("assets/playerTest.png"),
 		Space:  resolv.NewSpace(),
+		Health: 3,
 	}
 
 	p.Collision = resolv.NewRectangle(
@@ -153,7 +157,20 @@ func (p *Player) Draw() {
 	p.debugDraw()
 }
 
+func (p *Player) TakeDamage() {
+	p.Health--
+	if p.Health <= 0 {
+		p.IsDead = true
+	}
+}
+
 func (p *Player) debugDraw() {
+	// Draw health.
+	r.DrawText(
+		"HP: "+strconv.Itoa(p.Health),
+		int(p.Collision.X), int(p.Collision.Y-(p.Collision.W/2)), 10,
+		r.White,
+	)
 	r.DrawRectangleLines(
 		int(p.Collision.X), int(p.Collision.Y),
 		int(p.Collision.W), int(p.Collision.H),
