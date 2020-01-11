@@ -7,7 +7,7 @@ import (
 )
 
 // Update is non drawing related functionality with the enemy.
-func (b *Basic) Update() {
+func (b *Basic) Update(float32) {
 	b.move()
 	b.attack()
 }

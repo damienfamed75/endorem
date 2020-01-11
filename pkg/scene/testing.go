@@ -12,39 +12,49 @@ import (
 
 // TestingScene is a testing scene for scene management.
 type TestingScene struct {
-	enemy  *enemy.Basic
 	player *player.Player
 
-	ground *resolv.Space
-	world  *resolv.Space
-	camera *common.EndoCamera
+	enemies *resolv.Space
+	ground  *resolv.Space
+	world   *resolv.Space
+	camera  *common.EndoCamera
 }
 
 // Preload is used to load in assets and entities
 func (s *TestingScene) Preload() {
 	s.world = resolv.NewSpace()
 	s.ground = resolv.NewSpace()
+	s.enemies = resolv.NewSpace()
 
+	// Add all ground to the ground space.
 	s.ground.Add(
 		testing.NewPlane(),
 	)
 
-	s.enemy = enemy.NewBasic(100, 468)
+	// Add enemies to the enemy space. Must be of common.Entity
+	s.enemies.Add(
+		enemy.NewBasic(100, 468),
+	)
+
 	s.player = player.NewPlayer(0, 468, func() {})
 	s.camera = common.NewEndoCamera(s.player.Collision)
 
-	s.world.Add(s.ground)
-	s.world.Add(s.player, s.enemy)
+	// Add everything to the world space.
+	s.world.Add(s.ground, s.enemies, s.player)
 }
 
 // Update frames
 func (s *TestingScene) Update(dt float32) {
+	// Update the camera and player.
 	s.camera.Update(s.player.Update(s.ground))
-	s.enemy.Update()
 
-	enemies := s.world.FilterByTags(common.TagEnemy)
+	// Update all the enemies.
+	for i := range *s.enemies {
+		(*s.enemies)[i].(common.Entity).Update(dt)
+	}
 
-	for _, en := range *enemies {
+	// Loop through all the enemies and detect collisions with the player.
+	for _, en := range *s.enemies {
 		if en.GetData() == nil {
 			continue
 		}
@@ -79,12 +89,16 @@ func (s *TestingScene) Draw() {
 	r.BeginMode2D(s.camera.Camera2D)
 	r.ClearBackground(r.Black)
 
-	for _, g := range *s.ground {
-		g.(Drawer).Draw()
+	// Draw all ground elements.
+	for i := range *s.ground {
+		(*s.ground)[i].(Drawer).Draw()
+	}
+	// Draw all the enemies.
+	for i := range *s.enemies {
+		(*s.enemies)[i].(common.Entity).Draw()
 	}
 
 	s.player.Draw()
-	s.enemy.Draw()
 
 	r.EndMode2D()
 }

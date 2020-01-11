@@ -9,6 +9,10 @@ import (
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
+var (
+	_ common.Entity = &Basic{}
+)
+
 // Basic is a testing enemy that is very basic in attacks and features.
 type Basic struct {
 	Health          int
