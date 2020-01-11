@@ -19,9 +19,12 @@ type Basic struct {
 	AttackZone *resolv.Rectangle
 	Hurtbox    *resolv.Rectangle
 
-	begin           time.Time
-	isAttacking     bool
+	begin       time.Time
+	isAttacking bool
+	// Multiplier of the enemy's horizontal movement.
 	speedMultiplier float32
+	// How often the enemy can attack (in milliseconds)
+	attackTimer time.Duration
 
 	*resolv.Space
 }
@@ -32,9 +35,11 @@ func setupBasic() *Basic {
 		Space:           resolv.NewSpace(),
 		Health:          2 + common.GlobalConfiguration.Enemy.AddedHealth,
 		speedMultiplier: common.GlobalConfiguration.Enemy.MoveSpeedMultiplier,
+		attackTimer:     time.Duration(common.GlobalConfiguration.Enemy.AttackTimer),
 	}
 }
 
+// NewBasic returns a configured basic enemy at the given coordinates.
 func NewBasic(x, y int) *Basic {
 	b := setupBasic()
 
@@ -83,7 +88,7 @@ func NewBasic(x, y int) *Basic {
 func (b *Basic) Update() {
 	// Debugging:
 	// Timer for attacks every half second.
-	if time.Since(b.begin) >= time.Millisecond*500 {
+	if time.Since(b.begin) >= time.Millisecond*b.attackTimer {
 		// Reset timer.
 		b.begin = time.Now()
 
