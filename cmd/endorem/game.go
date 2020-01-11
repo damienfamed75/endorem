@@ -19,3 +19,7 @@ func NewGame() *Game {
 
 	return g
 }
+
+func (g *Game) Update() {
+
+}
