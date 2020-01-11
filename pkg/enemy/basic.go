@@ -17,7 +17,7 @@ type Basic struct {
 	Sprite     r.Texture2D
 	Collision  *resolv.Rectangle
 	AttackZone *resolv.Rectangle
-	Hurtbox    *resolv.Rectangle
+	Hitbox     *resolv.Rectangle
 
 	begin       time.Time
 	isAttacking bool
@@ -61,7 +61,7 @@ func NewBasic(x, y int) *Basic {
 		int32(x), int32(y),
 		b.Sprite.Height*attackZoneWidth, b.Sprite.Height*attackZoneHeight,
 	)
-	b.Hurtbox = resolv.NewRectangle(
+	b.Hitbox = resolv.NewRectangle(
 		0, 0, b.Sprite.Height, b.Sprite.Width,
 	)
 
@@ -76,7 +76,7 @@ func NewBasic(x, y int) *Basic {
 
 	// Tag this enemy as an enemy.
 	b.Collision.AddTags(common.TagEnemy)
-	b.Hurtbox.AddTags(common.TagEnemy)
+	b.Hitbox.AddTags(common.TagEnemy)
 
 	// DEBUG - timer for enemy's attack atm. Will be removed.
 	b.begin = time.Now()
@@ -96,11 +96,11 @@ func (b *Basic) Update() {
 		b.isAttacking = !b.isAttacking
 		if b.isAttacking {
 			// Re-add hurtbox to the enemy space and set position to enemy.
-			b.Hurtbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
-			b.Add(b.Hurtbox)
+			b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
+			b.Add(b.Hitbox)
 		} else {
 			// Remove hurtbox from enemy space.
-			b.Remove(b.Hurtbox)
+			b.Remove(b.Hitbox)
 		}
 	}
 }
@@ -129,8 +129,8 @@ func (b *Basic) debugDraw() {
 	// If the enemy is attacking then draw the debug collision box.
 	if b.isAttacking {
 		r.DrawRectangleLines(
-			int(b.Hurtbox.X), int(b.Hurtbox.Y),
-			int(b.Hurtbox.W), int(b.Hurtbox.H),
+			int(b.Hitbox.X), int(b.Hitbox.Y),
+			int(b.Hitbox.W), int(b.Hitbox.H),
 			r.Green,
 		)
 	}
