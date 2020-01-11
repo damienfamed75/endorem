@@ -73,7 +73,8 @@ func main() {
 		}
 
 		r.BeginDrawing()
-		r.BeginMode2D(r.Camera2D(*cam)) // Begin drawing with camera.
+		r.BeginMode2D(cam.Camera2D) // Begin drawing with camera.
+		// r.BeginMode2D(r.Camera2D(*cam)) // Begin drawing with camera.
 		r.ClearBackground(r.Black)
 
 		tPlane.Draw()

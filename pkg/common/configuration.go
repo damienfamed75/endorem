@@ -17,6 +17,10 @@ type Config struct {
 			Width  int `json:"width"`
 			Height int `json:"height"`
 		} `json:"screen"`
+		Camera struct {
+			DefaultZoom  float32 `json:"defaultZoom"`
+			DefaultSpeed float32 `json:"defaultSpeed"`
+		} `json:"camera"`
 	} `json:"game"`
 
 	Player struct {
