@@ -10,7 +10,8 @@
         "addedHealth": 0,
         "jumpHeight": 10,
         "moveSpeed": 10,
-        "attackTimer": 250
+        "attackTimer": 250,
+        "invincibleTimer": 1000
     },
     "enemy": {
         "addedHealth": 0,

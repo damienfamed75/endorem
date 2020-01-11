@@ -76,11 +76,11 @@ func NewBasic(x, y int) *Basic {
 	)
 
 	// Add the collision boxes to the enemy space.
-	b.Add(b.Collision, b.AttackZone)
+	b.Add(b.Collision)
 	b.SetData(b)
 
 	// Tag this enemy as an enemy.
-	b.Collision.AddTags(common.TagEnemy)
+	b.AddTags(common.TagEnemy)
 	b.Hitbox.AddTags(common.TagEnemy)
 
 	// DEBUG - timer for enemy's attack atm. Will be removed.

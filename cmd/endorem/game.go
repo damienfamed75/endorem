@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/SolarLune/resolv/resolv"
 )
 
@@ -22,4 +24,8 @@ func NewGame() *Game {
 
 func (g *Game) Update() {
 
+}
+
+func (g *Game) GameOver() {
+	fmt.Println("GAME OVER")
 }
