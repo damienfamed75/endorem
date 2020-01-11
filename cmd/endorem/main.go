@@ -43,6 +43,11 @@ func main() {
 			tPlayer.TakeDamage()
 		}
 
+		if sh := tPlayer.GetCollidingShapes(enemies); sh.GetData() != nil {
+
+			// fmt.Println("collision:", sh)
+		}
+
 		r.BeginDrawing()
 		r.ClearBackground(r.Black)
 

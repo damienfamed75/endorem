@@ -62,6 +62,7 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 	p.Hitbox = resolv.NewRectangle(
 		0, 0, p.Sprite.Height, p.Sprite.Width,
 	)
+	p.Hitbox.SetData(HitboxData)
 
 	//Add to collision boxes to player space.
 	p.Add(p.Collision)
