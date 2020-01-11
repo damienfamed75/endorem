@@ -14,9 +14,8 @@ type MenuScene struct {
 	player *player.Player
 
 	ground *resolv.Space
-	walls  *resolv.Space
 	world  *resolv.Space
-	camera *common.MenuCamera
+	camera r.Camera2D
 }
 
 //Preload is used to load in assets and entities
@@ -28,13 +27,16 @@ func (s *MenuScene) Preload() {
 	s.ground.Add(
 		testing.NewPlane(0, 250, 250, 50),
 		testing.NewPlane(300, 250, 100, 50),
+		testing.NewPlane(0, 0, 50, 200),
+		testing.NewPlane(350, 0, 50, 250),
 	)
 
-	// s.walls.Add()
-
 	// Create player and camera
-	s.player = player.NewPlayer(0, 268, func() {}, s.ground)
-	s.camera = common.NewMenuCamera()
+	s.player = player.NewPlayer(200, 268, func() {}, s.ground)
+	defaultZoom := common.GlobalConfig.Game.Camera.DefaultZoom
+	s.camera = r.Camera2D{
+		Zoom: defaultZoom,
+	}
 
 	s.world.Add(s.ground, s.player)
 }
@@ -47,18 +49,13 @@ func (s *MenuScene) Update(dt float32) {
 
 // Draw frames
 func (s *MenuScene) Draw() {
-	r.BeginMode2D(s.camera.Camera2D)
+	r.BeginMode2D(s.camera)
 	r.ClearBackground(r.Black)
 
 	// Draw ground elements.
 	for i := range *s.ground {
 		(*s.ground)[i].(Drawer).Draw()
 	}
-
-	// Draw wall elements.
-	// for i := range *s.walls {
-	// 	(*s.walls)[i].(Drawer).Draw()
-	// }
 
 	s.player.Draw()
 

@@ -24,6 +24,7 @@ type TestingScene struct {
 func (s *TestingScene) Preload() {
 	s.world = resolv.NewSpace()
 	s.ground = resolv.NewSpace()
+
 	s.enemies = resolv.NewSpace()
 
 	// Add all ground to the ground space.
@@ -93,6 +94,7 @@ func (s *TestingScene) Draw() {
 	for i := range *s.ground {
 		(*s.ground)[i].(Drawer).Draw()
 	}
+
 	// Draw all the enemies.
 	for i := range *s.enemies {
 		(*s.enemies)[i].(common.Entity).Draw()

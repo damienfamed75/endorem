@@ -81,7 +81,8 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	// Add to collision boxes to player space.
 	p.Add(p.Collision)
 
-	// Saves the ground space for collision detection with player
+	// Saves the ground
+	// for collision detection with player
 	p.Ground = ground
 
 	return p
@@ -106,6 +107,7 @@ func (p *Player) movePlayer() r.Vector2 {
 		p.SpeedX = 0
 	}
 
+	// Controller Events
 	if r.IsKeyDown(r.KeyD) {
 		p.SpeedX += accel
 		p.Facing = common.Right
@@ -117,6 +119,7 @@ func (p *Player) movePlayer() r.Vector2 {
 		p.state = common.StateLeft
 	}
 
+	// Speed Limit
 	if p.SpeedX > maxSpd {
 		p.SpeedX = maxSpd
 	}
@@ -124,7 +127,7 @@ func (p *Player) movePlayer() r.Vector2 {
 		p.SpeedX = -maxSpd
 	}
 
-	// Jumping
+	// JUMPING
 	down := p.Ground.Resolve(p.Collision, 0, 4)
 	onGround := down.Colliding()
 
@@ -135,10 +138,11 @@ func (p *Player) movePlayer() r.Vector2 {
 	x := int32(p.SpeedX)
 	y := int32(p.SpeedY)
 
-	// if res := ground.Resolve(p.Collision, x, 0); res.Colliding() {
-	// 	x = res.ResolveX
-	// 	p.SpeedX = 0
-	// }
+	// Check wall collision
+	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
+		x = res.ResolveX
+		p.SpeedX = 0
+	}
 
 	p.Collision.X += x
 

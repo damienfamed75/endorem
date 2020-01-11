@@ -11,12 +11,6 @@ type EndoCamera struct {
 	r.Camera2D
 }
 
-// Menu camera is a static camera that doesn't follow the player
-// could potentially be used as a
-type MenuCamera struct {
-	r.Camera2D
-}
-
 // type EndoCamera r.Camera2D
 
 // NewEndoCamera creates a default offset of the player's position.
@@ -47,13 +41,4 @@ func (e *EndoCamera) Update(diff, curr r.Vector2) {
 	// Reset the camera's target to the player's current position.
 	// Using a lerp to make the camera movement smoother.
 	e.Target = e.Target.Lerp(curr, 0.1)
-}
-
-func NewMenuCamera() *MenuCamera {
-	defaultZoom := GlobalConfig.Game.Camera.DefaultZoom
-	return &MenuCamera{
-		Camera2D: r.Camera2D{
-			Zoom: defaultZoom,
-		},
-	}
 }
