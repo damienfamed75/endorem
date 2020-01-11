@@ -14,6 +14,9 @@ type Player struct {
 	Collision *resolv.Rectangle
 	Hitbox    *resolv.Rectangle
 
+	SpeedX float32
+	SpeedY float32
+
 	onGround    bool
 	isAttacking bool
 
@@ -54,13 +57,47 @@ func NewPlayer(x, y int) *Player {
 }
 
 // movePlayer handles key binded events involving the movement of the character
-func (p *Player) movePlayer() {
+func (p *Player) movePlayer(ground *resolv.Space) {
+
+	// Left/Right Movement
+	//	p.SpeedY += 0.5
+
+	friction := float32(0.5)
+	accel := 0.5 + friction
+
+	maxSpd := float32(3)
+
+	if p.SpeedX > friction {
+		p.SpeedX -= friction
+	} else if p.SpeedX < -friction {
+		p.SpeedX += friction
+	} else {
+		p.SpeedX = 0
+	}
+
 	if r.IsKeyDown(r.KeyD) {
-		p.Collision.Move(1, 0)
+		p.SpeedX += accel
 	}
 	if r.IsKeyDown(r.KeyA) {
-		p.Collision.Move(-1, 0)
+		p.SpeedX -= accel
 	}
+
+	if p.SpeedX > maxSpd {
+		p.SpeedX = maxSpd
+	}
+	if p.SpeedX < -maxSpd {
+		p.SpeedX = -maxSpd
+	}
+	x := int32(p.SpeedX)
+	//y := int32(p.SpeedY)
+
+	if res := ground.Resolve(p.Collision, x, 0); res.Colliding() {
+		x = res.ResolveX
+		p.SpeedX = 0
+	}
+
+	p.Collision.X += x
+
 	// Jumping
 	if r.IsKeyPressed(r.KeyW) && p.onGround {
 		p.Collision.Move(0, -20)
@@ -102,7 +139,7 @@ func (p *Player) checkInAir(ground *resolv.Space) {
 }
 
 func (p *Player) Update(ground *resolv.Space) {
-	p.movePlayer()
+	p.movePlayer(ground)
 	p.checkAttack()
 	p.checkInAir(ground)
 }
