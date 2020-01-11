@@ -39,13 +39,25 @@ func main() {
 		enemies := g.world.FilterByTags(common.TagEnemy)
 
 		// Player has been touched by an enemy.
-		if enemies.IsColliding(tPlayer) {
+		if sh := tPlayer.GetCollidingShapes(enemies); sh.GetData() == player.HurtboxData {
 			tPlayer.TakeDamage()
 		}
 
-		if sh := tPlayer.GetCollidingShapes(enemies); sh.GetData() != nil {
+		for _, en := range *enemies {
+			if en.GetData() == nil {
+				continue
+			}
 
-			// fmt.Println("collision:", sh)
+			// Check the type of the enemy space data.
+			// If it's a string, then it's a Hitbox.
+			// If it's a reference to itself then it's a Hurtbox.
+			switch t := en.GetData().(type) {
+			case *enemy.Basic: // Hurtbox
+				// If the hurtbox is colliding a player hitbox then take damage.
+				if t.IsColliding(tPlayer.Hitbox) {
+					t.TakeDamage()
+				}
+			}
 		}
 
 		r.BeginDrawing()

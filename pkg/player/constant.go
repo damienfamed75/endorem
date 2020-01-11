@@ -1,5 +1,6 @@
 package player
 
 const (
-	HitboxData = "hitbox"
+	HurtboxData = "playerHurtbox"
+	HitboxData  = "playerHitbox"
 )

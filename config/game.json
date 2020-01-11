@@ -16,6 +16,7 @@
     "enemy": {
         "addedHealth": 0,
         "moveSpeedMultiplier": 1,
-        "attackTimer": 250
+        "attackTimer": 250,
+        "invincibleTimer": 1000
     }
 }

@@ -30,7 +30,8 @@ type Config struct {
 	Enemy struct {
 		AddedHealth         int     `json:"addedHealth"`
 		MoveSpeedMultiplier float32 `json:"moveSpeedMultiplier"`
-		AttackTimer         int     `json:"attackTimer"` // milliseconds
+		AttackTimer         int     `json:"attackTimer"`     // milliseconds
+		InvincibleTimer     int     `json:"invincibleTimer"` // milliseconds
 	} `json:"enemy"`
 }
 

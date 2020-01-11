@@ -63,6 +63,7 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 		0, 0, p.Sprite.Height, p.Sprite.Width,
 	)
 	p.Hitbox.SetData(HitboxData)
+	p.Collision.SetData(HurtboxData)
 
 	//Add to collision boxes to player space.
 	p.Add(p.Collision)

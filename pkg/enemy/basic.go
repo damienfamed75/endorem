@@ -21,13 +21,15 @@ type Basic struct {
 	AttackZone *resolv.Rectangle
 	Hitbox     *resolv.Rectangle
 
-	begin       time.Time
 	state       string
 	isAttacking bool
 	// Multiplier of the enemy's horizontal movement.
 	speedMultiplier float32
 	// How often the enemy can attack (in milliseconds)
-	attackTimer time.Duration
+	attackBefore    time.Time
+	attackTimer     time.Duration
+	healthBefore    time.Time
+	invincibleTimer time.Duration
 
 	*resolv.Space
 }
@@ -40,6 +42,9 @@ func setupBasic() *Basic {
 		state:           "idle",
 		speedMultiplier: common.GlobalConfig.Enemy.MoveSpeedMultiplier,
 		attackTimer:     time.Duration(common.GlobalConfig.Enemy.AttackTimer),
+		attackBefore:    time.Now(),
+		healthBefore:    time.Now(),
+		invincibleTimer: time.Duration(common.GlobalConfig.Enemy.InvincibleTimer),
 	}
 }
 
@@ -79,12 +84,12 @@ func NewBasic(x, y int) *Basic {
 	b.Add(b.Collision)
 	b.SetData(b)
 
+	// Set the hitbox data to be different from the hitbox data.
+	b.Hitbox.SetData(HitboxData)
+
 	// Tag this enemy as an enemy.
 	b.AddTags(common.TagEnemy)
 	b.Hitbox.AddTags(common.TagEnemy)
-
-	// DEBUG - timer for enemy's attack atm. Will be removed.
-	b.begin = time.Now()
 
 	return b
 }
@@ -93,9 +98,9 @@ func NewBasic(x, y int) *Basic {
 func (b *Basic) Update() {
 	// Debugging:
 	// Timer for attacks every half second.
-	if time.Since(b.begin) >= time.Millisecond*b.attackTimer {
+	if time.Since(b.attackBefore) >= time.Millisecond*b.attackTimer {
 		// Reset timer.
-		b.begin = time.Now()
+		b.attackBefore = time.Now()
 
 		// Flip attack value.
 		b.isAttacking = !b.isAttacking
@@ -121,10 +126,15 @@ func (b *Basic) Draw() {
 }
 
 func (b *Basic) TakeDamage() {
-	b.Health--
-	if b.Health <= 0 {
-		b.IsDead = true
-		b.Clear()
+	if time.Since(b.healthBefore) >= time.Millisecond*b.invincibleTimer {
+		b.healthBefore = time.Now()
+
+		b.Health--
+		if b.Health <= 0 {
+			b.IsDead = true
+			b.state = "dead"
+			b.Clear()
+		}
 	}
 }
 
