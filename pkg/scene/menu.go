@@ -13,32 +13,42 @@ import (
 type MenuScene struct {
 	player *player.Player
 
-	ground *resolv.Space
-	world  *resolv.Space
-	camera r.Camera2D
+	ground      *resolv.Space
+	transitions *resolv.Space
+	world       *resolv.Space
+	camera      r.Camera2D
 }
 
 //Preload is used to load in assets and entities
 func (s *MenuScene) Preload() {
 	s.world = resolv.NewSpace()
 	s.ground = resolv.NewSpace()
+	s.transitions = resolv.NewSpace()
 
 	//Add all ground and walls to spaces
 	s.ground.Add(
-		testing.NewPlane(0, 250, 250, 50),
-		testing.NewPlane(300, 250, 100, 50),
-		testing.NewPlane(0, 0, 50, 200),
-		testing.NewPlane(350, 0, 50, 250),
+		// ground
+		testing.NewPlane(0, 250, 250, 50, r.Orange),
+		testing.NewPlane(300, 250, 100, 50, r.Orange),
+
+		//walls
+		testing.NewPlane(0, 0, 50, 200, r.Orange),
+		testing.NewPlane(350, 0, 50, 250, r.Orange),
 	)
 
+	s.transitions.Add(
+		//exits
+		testing.NewTransition(250, 290, 50, 10, testing.ExitTransition),
+		testing.NewTransition(0, 200, 10, 50, testing.SceneTransition),
+	)
 	// Create player and camera
-	s.player = player.NewPlayer(200, 268, func() {}, s.ground)
+	s.player = player.NewPlayer(200, 268, func() {}, s.ground, s.transitions)
 	defaultZoom := common.GlobalConfig.Game.Camera.DefaultZoom
 	s.camera = r.Camera2D{
 		Zoom: defaultZoom,
 	}
 
-	s.world.Add(s.ground, s.player)
+	s.world.Add(s.ground, s.transitions, s.player)
 }
 
 // Update frames
@@ -56,7 +66,10 @@ func (s *MenuScene) Draw() {
 	for i := range *s.ground {
 		(*s.ground)[i].(Drawer).Draw()
 	}
-
+	// Draw ground elements.
+	for i := range *s.transitions {
+		(*s.transitions)[i].(Drawer).Draw()
+	}
 	s.player.Draw()
 
 	r.EndMode2D()

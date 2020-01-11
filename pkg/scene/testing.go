@@ -29,7 +29,7 @@ func (s *TestingScene) Preload() {
 
 	// Add all ground to the ground space.
 	s.ground.Add(
-		testing.NewPlane(0, 500, 800, 100),
+		testing.NewPlane(0, 500, 800, 100, r.Orange),
 	)
 
 	// Add enemies to the enemy space. Must be of common.Entity
@@ -37,7 +37,7 @@ func (s *TestingScene) Preload() {
 		enemy.NewBasic(100, 468),
 	)
 
-	s.player = player.NewPlayer(0, 468, func() {}, s.ground)
+	s.player = player.NewPlayer(0, 468, func() {}, s.ground, nil)
 	s.camera = common.NewEndoCamera(s.player.Collision)
 
 	// Add everything to the world space.
