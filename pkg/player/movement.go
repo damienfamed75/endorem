@@ -23,7 +23,9 @@ type Player struct {
 	SpeedX float32
 	SpeedY float32
 
-	onGround        bool
+	Ground   *resolv.Space
+	onGround bool
+
 	isAttacking     bool
 	isCrouched      bool
 	deathFunc       func()
@@ -53,7 +55,7 @@ func setupPlayer() *Player {
 
 // NewPlayer creates a player struct, loading the player sprite texture and generates
 // the collision space for the player
-func NewPlayer(x, y int, deathFunc func()) *Player {
+func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	p := setupPlayer()
 
 	// Set the death function that'll be called when the player dies.
@@ -79,11 +81,14 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 	// Add to collision boxes to player space.
 	p.Add(p.Collision)
 
+	// Saves the ground space for collision detection with player
+	p.Ground = ground
+
 	return p
 }
 
 // movePlayer handles key binded events involving the movement of the character
-func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
+func (p *Player) movePlayer() r.Vector2 {
 
 	// Left/Right Movement
 	p.SpeedY += 0.5
@@ -120,7 +125,7 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 	}
 
 	// Jumping
-	down := ground.Resolve(p.Collision, 0, 4)
+	down := p.Ground.Resolve(p.Collision, 0, 4)
 	onGround := down.Colliding()
 
 	if r.IsKeyPressed(r.KeyW) && onGround {
@@ -137,13 +142,13 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 
 	p.Collision.X += x
 
-	res := ground.Resolve(p.Collision, 0, y+4)
+	res := p.Ground.Resolve(p.Collision, 0, y+4)
 
 	if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
 		res = resolv.Collision{}
 	}
 	if !res.Colliding() {
-		res = ground.Resolve(p.Collision, 0, y)
+		res = p.Ground.Resolve(p.Collision, 0, y)
 	}
 
 	if res.Colliding() {
@@ -195,10 +200,10 @@ func (p *Player) attack() {
 	p.isAttacking = true
 }
 
-func (p *Player) Update(ground *resolv.Space) (r.Vector2, r.Vector2) {
+func (p *Player) Update() (r.Vector2, r.Vector2) {
 	p.state = common.StateIdle
 
-	diff := p.movePlayer(ground)
+	diff := p.movePlayer()
 	p.checkAttack()
 	//p.checkInAir(ground)
 

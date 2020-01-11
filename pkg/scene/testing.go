@@ -36,7 +36,7 @@ func (s *TestingScene) Preload() {
 		enemy.NewBasic(100, 468),
 	)
 
-	s.player = player.NewPlayer(0, 468, func() {})
+	s.player = player.NewPlayer(0, 468, func() {}, s.ground)
 	s.camera = common.NewEndoCamera(s.player.Collision)
 
 	// Add everything to the world space.
@@ -46,7 +46,7 @@ func (s *TestingScene) Preload() {
 // Update frames
 func (s *TestingScene) Update(dt float32) {
 	// Update the camera and player.
-	s.camera.Update(s.player.Update(s.ground))
+	s.camera.Update(s.player.Update())
 
 	// Update all the enemies.
 	for i := range *s.enemies {
