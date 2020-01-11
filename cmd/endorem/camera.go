@@ -5,11 +5,13 @@ import (
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
+// EndoCamera is a custom name for the raylib Camera2D
 type EndoCamera r.Camera2D
 
 // NewEndoCamera creates a default offset of the player's position.
 func NewEndoCamera(playerColl *resolv.Rectangle) *EndoCamera {
-	xOff, yOff := playerColl.X-(playerColl.W/2), playerColl.Y-(playerColl.H/2)
+	// Get the center coordinates of the player collision
+	xOff, yOff := playerColl.Center()
 	return &EndoCamera{
 		Offset: r.NewVector2(
 			float32(xOff+int32(r.GetScreenWidth())),
@@ -22,8 +24,10 @@ func NewEndoCamera(playerColl *resolv.Rectangle) *EndoCamera {
 
 // Update changes the offset position of the camera and the target.
 func (e *EndoCamera) Update(diff, curr r.Vector2) {
+	// Update camera offset coordinates for it to move.
 	e.Offset.X -= diff.X
 	e.Offset.Y -= diff.Y
 
+	// Reset the camera's target to the player's current position.
 	e.Target = curr
 }

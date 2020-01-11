@@ -28,12 +28,14 @@ func main() {
 	tPlayer := player.NewPlayer(0, 468, g.GameOver)
 	basicEnemy := enemy.NewBasic(100, 468)
 
-	cam := NewEndoCamera(tPlayer.Collision)
+	// camera requires player's position for offset.
+	cam := NewEndoCamera(tPlayer.Collision) // TODO - move camera to Game
 
 	// Add everything to the world space.
 	g.world.Add(tPlane, tPlayer, basicEnemy)
 
 	for !r.WindowShouldClose() {
+		// Update the camera's position based on the player's movement.
 		cam.Update(tPlayer.Update(tPlane.Space))
 
 		basicEnemy.Update()
@@ -63,7 +65,7 @@ func main() {
 		}
 
 		r.BeginDrawing()
-		r.BeginMode2D(r.Camera2D(*cam))
+		r.BeginMode2D(r.Camera2D(*cam)) // Begin drawing with camera.
 		r.ClearBackground(r.Black)
 
 		r.DrawText("Endorem hello", 20, 20, 40, r.GopherBlue)
