@@ -13,6 +13,8 @@ func main() {
 	// Load in the global configuration for all future items to reference.
 	common.LoadConfig()
 
+	game := NewGame()
+
 	r.InitWindow(
 		common.GlobalConfig.ScreenWidth(),
 		common.GlobalConfig.ScreenHeight(),
@@ -24,7 +26,10 @@ func main() {
 
 	tPlane := testing.NewPlane()
 	tPlayer := player.NewPlayer(0, 468)
-	basicEnemy := enemy.NewBasic(100, 450)
+	basicEnemy := enemy.NewBasic(100, 468)
+
+	// Add everything to the world space.
+	game.world.Add(tPlane, tPlayer, basicEnemy)
 
 	for !r.WindowShouldClose() {
 

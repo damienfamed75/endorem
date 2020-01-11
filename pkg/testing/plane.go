@@ -10,11 +10,11 @@ import (
 type Plane struct {
 	// Collision affects the shape of the rectangle directly since it's a testing
 	// object, there is no reason why they should be separate.
-	Space *resolv.Space
-	Color r.Color
-
+	Color  r.Color
 	Width  int32
 	Height int32
+
+	*resolv.Space
 }
 
 // NewPlane returns the default shape of the testing plane which is meant for an
