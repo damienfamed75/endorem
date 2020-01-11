@@ -13,6 +13,7 @@ func (b *Basic) Update() {
 }
 
 func (b *Basic) attack() {
+	// TODO - if player is in attackzone then try to attack.
 	// Debugging:
 	// Timer for attacks every half second.
 	if time.Since(b.attackBefore) >= time.Millisecond*b.attackTimer {
@@ -92,5 +93,7 @@ func (b *Basic) idleWalk() {
 	}
 
 	x := int32(b.SpeedX)
-	b.Collision.X += x
+
+	b.Collision.Move(x, 0)
+	b.AttackZone.Move(x, 0)
 }

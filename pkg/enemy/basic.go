@@ -16,6 +16,7 @@ type Basic struct {
 	SpeedY          float32
 	IsDead          bool
 	PlayerSeen      bool // If the enemy has spotted the enemy.
+	ShouldAttack    bool
 	Facing          common.Direction
 	Origin          r.Vector2
 	Destinations    [2]r.Vector2 // left and right destinations

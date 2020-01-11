@@ -35,8 +35,6 @@ func main() {
 	// Add everything to the world space.
 	g.world.Add(tPlane, tPlayer, basicEnemy)
 
-	distanceColor := r.GopherBlue
-
 	for !r.WindowShouldClose() {
 		// Update the camera's position based on the player's movement.
 		cam.Update(tPlayer.Update(tPlane.Space))
@@ -57,11 +55,12 @@ func main() {
 			case *enemy.Basic: // Hurtbox
 				enX, enY := t.Collision.Center()
 				pX, pY := tPlayer.Collision.Center()
-				if resolv.Distance(enX, enY, pX, pY) < 250 {
-					distanceColor = r.Red
-				} else {
-					distanceColor = r.Blue
-				}
+
+				// Calculate the distance from the enemy to the player.
+				dist := resolv.Distance(enX, enY, pX, pY)
+
+				t.PlayerSeen = dist < 250
+				t.ShouldAttack = dist < 30
 
 				// If the hurtbox is colliding a player hitbox then take damage.
 				if t.FilterByTags(enemy.TagHurtbox).IsColliding(tPlayer.Hitbox) {
@@ -78,10 +77,6 @@ func main() {
 		r.ClearBackground(r.Black)
 
 		r.DrawText("Endorem hello", 20, 20, 40, r.GopherBlue)
-		enX, enY := basicEnemy.Collision.Center()
-		pX, pY := tPlayer.Collision.Center()
-
-		r.DrawLine(int(enX), int(enY), int(pX), int(pY), distanceColor)
 
 		tPlane.Draw()
 		tPlayer.Draw()

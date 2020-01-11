@@ -1,6 +1,7 @@
 package enemy
 
 import (
+	"fmt"
 	"strconv"
 
 	r "github.com/lachee/raylib-goplus/raylib"
@@ -23,6 +24,11 @@ func (b *Basic) debugDraw() {
 	r.DrawText(
 		b.Facing.String(),
 		int(b.Collision.X), int(b.Collision.Y+b.Collision.H+10), 10,
+		r.White,
+	)
+	r.DrawText(
+		fmt.Sprintf("PSen: %v Atk: %v", b.PlayerSeen, b.ShouldAttack),
+		int(b.Collision.X), int(b.Collision.Y+b.Collision.H+20), 10,
 		r.White,
 	)
 
