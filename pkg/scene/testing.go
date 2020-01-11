@@ -24,11 +24,12 @@ type TestingScene struct {
 func (s *TestingScene) Preload() {
 	s.world = resolv.NewSpace()
 	s.ground = resolv.NewSpace()
+
 	s.enemies = resolv.NewSpace()
 
 	// Add all ground to the ground space.
 	s.ground.Add(
-		testing.NewPlane(),
+		testing.NewPlane(0, 500, 800, 100, r.Orange),
 	)
 
 	// Add enemies to the enemy space. Must be of common.Entity
@@ -36,7 +37,7 @@ func (s *TestingScene) Preload() {
 		enemy.NewBasic(100, 468),
 	)
 
-	s.player = player.NewPlayer(0, 468, func() {})
+	s.player = player.NewPlayer(0, 468, func() {}, s.ground, nil)
 	s.camera = common.NewEndoCamera(s.player.Collision)
 
 	// Add everything to the world space.
@@ -46,7 +47,7 @@ func (s *TestingScene) Preload() {
 // Update frames
 func (s *TestingScene) Update(dt float32) {
 	// Update the camera and player.
-	s.camera.Update(s.player.Update(s.ground))
+	s.camera.Update(s.player.Update())
 
 	// Update all the enemies.
 	for i := range *s.enemies {
@@ -93,6 +94,7 @@ func (s *TestingScene) Draw() {
 	for i := range *s.ground {
 		(*s.ground)[i].(Drawer).Draw()
 	}
+
 	// Draw all the enemies.
 	for i := range *s.enemies {
 		(*s.enemies)[i].(common.Entity).Draw()

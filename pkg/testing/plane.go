@@ -19,18 +19,19 @@ type Plane struct {
 
 // NewPlane returns the default shape of the testing plane which is meant for an
 // 800x600 display.
-func NewPlane() *Plane {
+func NewPlane(x, y, w, h int32, color r.Color) *Plane {
 	planeSpace := resolv.NewSpace()
 
 	planeSpace.Add(
-		resolv.NewRectangle(0, 500, 800, 100),
+		//resolv.NewRectangle(0, 500, 800, 100),
+		resolv.NewRectangle(x, y, w, h),
 	)
 	return &Plane{
 		Space: planeSpace,
 		Color: r.Orange,
 
-		Width:  800,
-		Height: 100,
+		Width:  w,
+		Height: h,
 	}
 }
 

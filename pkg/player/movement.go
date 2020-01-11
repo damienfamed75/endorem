@@ -23,7 +23,10 @@ type Player struct {
 	SpeedX float32
 	SpeedY float32
 
-	onGround        bool
+	Ground      *resolv.Space
+	Transitions *resolv.Space
+	onGround    bool
+
 	isAttacking     bool
 	isCrouched      bool
 	deathFunc       func()
@@ -53,7 +56,7 @@ func setupPlayer() *Player {
 
 // NewPlayer creates a player struct, loading the player sprite texture and generates
 // the collision space for the player
-func NewPlayer(x, y int, deathFunc func()) *Player {
+func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space, transitions *resolv.Space) *Player {
 	p := setupPlayer()
 
 	// Set the death function that'll be called when the player dies.
@@ -79,11 +82,16 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 	// Add to collision boxes to player space.
 	p.Add(p.Collision)
 
+	// Saves the ground
+	// for collision detection with player
+	p.Ground = ground
+	p.Transitions = transitions
+
 	return p
 }
 
 // movePlayer handles key binded events involving the movement of the character
-func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
+func (p *Player) movePlayer() r.Vector2 {
 
 	// Left/Right Movement
 	p.SpeedY += 0.5
@@ -101,6 +109,7 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 		p.SpeedX = 0
 	}
 
+	// Controller Events
 	if r.IsKeyDown(r.KeyD) {
 		p.SpeedX += accel
 		p.Facing = common.Right
@@ -112,6 +121,7 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 		p.state = common.StateLeft
 	}
 
+	// Speed Limit
 	if p.SpeedX > maxSpd {
 		p.SpeedX = maxSpd
 	}
@@ -119,8 +129,8 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 		p.SpeedX = -maxSpd
 	}
 
-	// Jumping
-	down := ground.Resolve(p.Collision, 0, 4)
+	// JUMPING
+	down := p.Ground.Resolve(p.Collision, 0, 4)
 	onGround := down.Colliding()
 
 	if r.IsKeyPressed(r.KeyW) && onGround {
@@ -130,27 +140,32 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 	x := int32(p.SpeedX)
 	y := int32(p.SpeedY)
 
-	// if res := ground.Resolve(p.Collision, x, 0); res.Colliding() {
-	// 	x = res.ResolveX
-	// 	p.SpeedX = 0
-	// }
+	// Check wall collision
+	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
+		x = res.ResolveX
+		p.SpeedX = 0
+	}
 
-	p.Collision.X += x
-
-	res := ground.Resolve(p.Collision, 0, y+4)
+	res := p.Ground.Resolve(p.Collision, 0, y+4)
 
 	if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
 		res = resolv.Collision{}
 	}
 	if !res.Colliding() {
-		res = ground.Resolve(p.Collision, 0, y)
+		res = p.Ground.Resolve(p.Collision, 0, y)
 	}
 
 	if res.Colliding() {
 		y = res.ResolveY
 		p.SpeedY = 0
 	}
+	p.Collision.X += x
 	p.Collision.Y += y
+
+	// Transition Check
+	if p.IsColliding(p.Transitions) {
+
+	}
 
 	// Crouching
 	// Changes to crouch sprite and hurtboxes
@@ -195,10 +210,10 @@ func (p *Player) attack() {
 	p.isAttacking = true
 }
 
-func (p *Player) Update(ground *resolv.Space) (r.Vector2, r.Vector2) {
+func (p *Player) Update() (r.Vector2, r.Vector2) {
 	p.state = common.StateIdle
 
-	diff := p.movePlayer(ground)
+	diff := p.movePlayer()
 	p.checkAttack()
 	//p.checkInAir(ground)
 
