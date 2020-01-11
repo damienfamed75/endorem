@@ -9,7 +9,7 @@
             "defaultSpeed": 0.1
         },
         "volume": 100,
-        "defaultScene": "testing scene"
+        "defaultScene": "menu scene"
     },
     "player": {
         "addedHealth": 0,

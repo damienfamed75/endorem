@@ -28,7 +28,7 @@ func (s *TestingScene) Preload() {
 
 	// Add all ground to the ground space.
 	s.ground.Add(
-		testing.NewPlane(),
+		testing.NewPlane(0, 500, 800, 100),
 	)
 
 	// Add enemies to the enemy space. Must be of common.Entity
