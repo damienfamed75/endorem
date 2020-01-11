@@ -12,18 +12,20 @@ import (
 // Player is the standard playable character, including functions that allow
 // for movement and action
 type Player struct {
-	Sprite    r.Texture2D
-	Collision *resolv.Rectangle
-	Hitbox    *resolv.Rectangle
-	Health    int
-	IsDead    bool
-	Facing    common.Direction
+	SpriteStand r.Texture2D
+	SpriteDuck  r.Texture2D
+	Collision   *resolv.Rectangle
+	Hitbox      *resolv.Rectangle
+	Health      int
+	IsDead      bool
+	Facing      common.Direction
 
 	SpeedX float32
 	SpeedY float32
 
 	onGround        bool
 	isAttacking     bool
+	isCrouched      bool
 	deathFunc       func()
 	healthBefore    time.Time
 	attackBefore    time.Time
@@ -36,7 +38,8 @@ type Player struct {
 
 func setupPlayer() *Player {
 	return &Player{
-		Sprite:          r.LoadTexture("assets/playerTest.png"),
+		SpriteStand:     r.LoadTexture("assets/playerTest.png"),
+		SpriteDuck:      r.LoadTexture("assets/playerDuck.png"),
 		Space:           resolv.NewSpace(),
 		Facing:          common.Right,
 		Health:          3,
@@ -59,11 +62,11 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 	// Setup collision and trigger boxes for the player.
 	p.Collision = resolv.NewRectangle(
 		int32(x), int32(y),
-		p.Sprite.Width, p.Sprite.Height,
+		p.SpriteStand.Width, p.SpriteStand.Height,
 	)
 
 	p.Hitbox = resolv.NewRectangle(
-		0, 0, p.Sprite.Height, p.Sprite.Width,
+		0, 0, p.SpriteStand.Height, p.SpriteStand.Width,
 	)
 
 	// Set all spaces to have self referencial data.
@@ -150,10 +153,10 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 	// Crouching
 	// Changes to crouch sprite and hurtboxes
 	if r.IsKeyDown(r.KeyS) {
-		//TODO
+		p.isCrouched = true
 		p.state = common.StateCrouch
 	} else {
-		//TODO
+		p.isCrouched = false
 	}
 
 	return r.NewVector2(float32(x), float32(y))
@@ -204,8 +207,16 @@ func (p *Player) Update(ground *resolv.Space) (r.Vector2, r.Vector2) {
 func (p *Player) Draw() {
 	//p.Collision.SetXY()
 	x, y := p.Collision.GetXY()
-	r.DrawTexture(p.Sprite, int(x), int(y), r.White)
 
+	if p.isCrouched {
+		p.Collision.H = p.SpriteDuck.Height
+		p.Collision.W = p.SpriteDuck.Width
+		r.DrawTexture(p.SpriteDuck, int(x), int(y), r.White)
+	} else {
+		p.Collision.H = p.SpriteStand.Height
+		p.Collision.W = p.SpriteStand.Width
+		r.DrawTexture(p.SpriteStand, int(x), int(y), r.White)
+	}
 	p.debugDraw()
 }
 

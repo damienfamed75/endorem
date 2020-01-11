@@ -1,7 +1,6 @@
 package enemy
 
 import (
-	"log"
 	"strconv"
 	"time"
 
@@ -127,7 +126,6 @@ func (b *Basic) move() {
 		if b.Collision.X == int32(d.X) && b.LastDestination != i {
 			b.Direction *= -1
 			b.LastDestination = i
-			log.Print("Destination MET!")
 		}
 	}
 	b.SpeedX += accel
