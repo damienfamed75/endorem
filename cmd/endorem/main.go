@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/damienfamed75/endorem/pkg/common"
 	"github.com/damienfamed75/endorem/pkg/enemy"
 	"github.com/damienfamed75/endorem/pkg/player"
 	"github.com/damienfamed75/endorem/pkg/testing"
@@ -9,7 +10,14 @@ import (
 )
 
 func main() {
-	r.InitWindow(800, 600, "Endorem")
+	// Load in the global configuration for all future items to reference.
+	common.LoadConfig()
+
+	r.InitWindow(
+		common.GlobalConfig.ScreenWidth(),
+		common.GlobalConfig.ScreenHeight(),
+		"Endorem",
+	)
 	defer r.CloseWindow()
 
 	r.SetTargetFPS(60)
