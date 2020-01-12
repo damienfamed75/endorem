@@ -12,6 +12,7 @@ import (
 // Player is the standard playable character, including functions that allow
 // for movement and action
 type Player struct {
+	MaskObj     *Mask
 	SpriteStand r.Texture2D
 	SpriteDuck  r.Texture2D
 	Collision   *resolv.Rectangle
@@ -40,6 +41,7 @@ type Player struct {
 
 func setupPlayer() *Player {
 	return &Player{
+		MaskObj:         NewMask(),
 		SpriteStand:     r.LoadTexture("assets/playerTest.png"),
 		SpriteDuck:      r.LoadTexture("assets/playerDuck.png"),
 		Space:           resolv.NewSpace(),
@@ -58,6 +60,7 @@ func setupPlayer() *Player {
 func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	p := setupPlayer()
 
+	// Create Mask to follow player
 	// Set the death function that'll be called when the player dies.
 	p.deathFunc = deathFunc
 
@@ -139,6 +142,7 @@ func (p *Player) movePlayer() r.Vector2 {
 	y := int32(p.SpeedY)
 
 	// Check wall collision
+	//TODO this collision check can be posibly handled in the plane struct
 	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
 		x = res.ResolveX
 		p.SpeedX = 0
@@ -198,7 +202,7 @@ func (p *Player) attack() {
 		p.Hitbox.SetXY(p.Collision.X, p.Collision.Y+p.Collision.H/3.0)
 	}
 
-	p.attackBefore = time.Now() // Reset timer
+	p.attackBefore = time.Now() // Reset timerS
 	p.Add(p.Hitbox)
 	p.isAttacking = true
 }
@@ -207,6 +211,7 @@ func (p *Player) Update() (r.Vector2, r.Vector2) {
 	p.state = common.StateIdle
 
 	diff := p.movePlayer()
+	p.MaskObj.followPlayer(p.Collision.X, p.Collision.Y)
 	p.checkAttack()
 	//p.checkInAir(ground)
 
@@ -215,6 +220,7 @@ func (p *Player) Update() (r.Vector2, r.Vector2) {
 
 // Draw creates a rectangle using Raylib and draws the outline of it.
 func (p *Player) Draw() {
+	p.MaskObj.Draw()
 	//p.Collision.SetXY()
 	x, y := p.Collision.GetXY()
 
