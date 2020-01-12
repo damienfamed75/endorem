@@ -15,15 +15,18 @@ type EndoCamera struct {
 
 // NewEndoCamera creates a default offset of the player's position.
 func NewEndoCamera(playerColl *resolv.Rectangle) *EndoCamera {
-	// Get the center coordinates of the player collision
-	xOff, yOff := playerColl.Center()
 	defaultZoom := GlobalConfig.Game.Camera.DefaultZoom
-	offsetMultiplier := defaultZoom - 0.5 // 0.5 tries to center the Y of cam
+	// offsetMultiplier := defaultZoom - 0.5 // 0.5 tries to center the Y of cam
+
+	// Get the center coordinates of the player collision
+	cx, cy := playerColl.Center()
+	xOff, yOff := -float32(cx)*defaultZoom, -float32(cy)*defaultZoom
+
 	return &EndoCamera{
 		Camera2D: r.Camera2D{
 			Offset: r.NewVector2(
-				float32(xOff+int32(r.GetScreenWidth())),
-				float32(yOff-int32(float32(r.GetScreenHeight())*offsetMultiplier)),
+				xOff+float32(r.GetScreenWidth()),
+				yOff+float32(r.GetScreenHeight()),
 			),
 			Rotation: 0,
 			Zoom:     defaultZoom,
@@ -40,5 +43,5 @@ func (e *EndoCamera) Update(diff, curr r.Vector2) {
 
 	// Reset the camera's target to the player's current position.
 	// Using a lerp to make the camera movement smoother.
-	e.Target = e.Target.Lerp(curr, 0.1)
+	e.Target = e.Target.Lerp(curr, e.LerpAmount)
 }
