@@ -138,30 +138,33 @@ func (p *Player) movePlayer() r.Vector2 {
 	x := int32(p.SpeedX)
 	y := int32(p.SpeedY)
 
-	x, y = p.checkCollision(x, y)
-
 	// Crouching
 	// Changes to crouch sprite and hurtboxes
+
 	if r.IsKeyDown(r.KeyS) {
+		p.Collision.H = p.SpriteDuck.Height
+		p.Collision.W = p.SpriteDuck.Width
 		p.isCrouched = true
 		p.state = common.StateCrouch
 	} else {
+		p.Collision.H = p.SpriteStand.Height
+		p.Collision.W = p.SpriteStand.Width
 		p.isCrouched = false
 	}
 
-	if r.IsKeyPressed(r.KeyS) {
-		p.Collision.Y += (p.SpriteStand.Height / 2)
-	}
-
-	if r.IsKeyReleased(r.KeyS) && p.onGround {
-		p.Collision.Y -= (p.SpriteStand.Height / 2)
-	}
+	x, y = p.checkCollision(x, y)
 	return r.NewVector2(float32(x), float32(y))
 }
 
 func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
 	// Check wall collision
 
+	// if r.IsKeyPressed(r.KeyS) {
+	// 	if res := p.Ground.Resolve(p.Collision, x, y+(p.SpriteStand.Height/2)); res.Colliding() {
+
+	// 		y = res.ResolveY
+	// 	}
+	// }
 	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
 		x = res.ResolveX
 		p.SpeedX = 0
@@ -181,6 +184,7 @@ func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
 
 		p.SpeedY = 0
 	}
+
 	p.Collision.X += x
 	p.Collision.Y += y
 
@@ -250,13 +254,8 @@ func (p *Player) Draw() {
 	x, y := p.Collision.GetXY()
 
 	if p.isCrouched {
-		p.Collision.H = p.SpriteDuck.Height
-		p.Collision.W = p.SpriteDuck.Width
 		r.DrawTexture(p.SpriteDuck, int(x), int(y), r.White)
 	} else {
-
-		p.Collision.H = p.SpriteStand.Height
-		p.Collision.W = p.SpriteStand.Width
 		r.DrawTexture(p.SpriteStand, int(x), int(y), r.White)
 	}
 	p.debugDraw()
