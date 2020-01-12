@@ -37,7 +37,7 @@ func (s *TestingScene) Preload() {
 		enemy.NewBasic(100, 468),
 	)
 
-	s.player = player.NewPlayer(0, 468, func() {}, s.ground, nil)
+	s.player = player.NewPlayer(0, 468, func() {}, s.ground)
 	s.camera = common.NewEndoCamera(s.player.Collision)
 
 	// Add everything to the world space.

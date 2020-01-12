@@ -23,9 +23,8 @@ type Player struct {
 	SpeedX float32
 	SpeedY float32
 
-	Ground      *resolv.Space
-	Transitions *resolv.Space
-	onGround    bool
+	Ground   *resolv.Space
+	onGround bool
 
 	isAttacking     bool
 	isCrouched      bool
@@ -56,7 +55,7 @@ func setupPlayer() *Player {
 
 // NewPlayer creates a player struct, loading the player sprite texture and generates
 // the collision space for the player
-func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space, transitions *resolv.Space) *Player {
+func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	p := setupPlayer()
 
 	// Set the death function that'll be called when the player dies.
@@ -85,7 +84,6 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space, transitions *re
 	// Saves the ground
 	// for collision detection with player
 	p.Ground = ground
-	p.Transitions = transitions
 
 	return p
 }
@@ -161,11 +159,6 @@ func (p *Player) movePlayer() r.Vector2 {
 	}
 	p.Collision.X += x
 	p.Collision.Y += y
-
-	// Transition Check
-	if p.IsColliding(p.Transitions) {
-
-	}
 
 	// Crouching
 	// Changes to crouch sprite and hurtboxes
