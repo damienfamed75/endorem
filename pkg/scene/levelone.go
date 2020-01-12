@@ -39,7 +39,7 @@ func (l *LevelOne) Preload() {
 
 	x, y := (spawnRoom.X*mapScale)+int(34), (spawnRoom.Y*mapScale)+int(34*2)
 
-	l.player = player.NewPlayer(x, y, func() {}, l.ground, resolv.NewSpace())
+	l.player = player.NewPlayer(x, y, func() {}, l.ground)
 	l.camera = common.NewEndoCamera(l.player.Collision)
 
 	l.mapData.Select().By(func(x, y int) bool {
