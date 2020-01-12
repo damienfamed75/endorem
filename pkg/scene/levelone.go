@@ -1,6 +1,8 @@
 package scene
 
 import (
+	"fmt"
+
 	"github.com/SolarLune/dngn"
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
@@ -49,6 +51,13 @@ func (l *LevelOne) Preload() {
 
 	l.player = player.NewPlayer(x, y, func() {}, l.ground)
 	l.camera = common.NewEndoCamera(l.player.Collision)
+
+	fmt.Printf("player inventory before [%v]\n", l.player.Inventory)
+
+	l.player.Inventory.AddItem(&testing.Item{})
+
+	// Show that the player has gotten an item that does nothing.
+	fmt.Printf("player inventory after [%v]\n", l.player.Inventory)
 
 	l.mapData.Select().By(func(x, y int) bool {
 		switch l.mapData.Get(x, y) {
