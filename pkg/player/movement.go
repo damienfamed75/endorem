@@ -12,6 +12,7 @@ import (
 // Player is the standard playable character, including functions that allow
 // for movement and action
 type Player struct {
+	MaskObj     *Mask
 	SpriteStand r.Texture2D
 	SpriteDuck  r.Texture2D
 	Collision   *resolv.Rectangle
@@ -23,7 +24,9 @@ type Player struct {
 	SpeedX float32
 	SpeedY float32
 
-	onGround        bool
+	Ground   *resolv.Space
+	onGround bool
+
 	isAttacking     bool
 	isCrouched      bool
 	deathFunc       func()
@@ -38,6 +41,7 @@ type Player struct {
 
 func setupPlayer() *Player {
 	return &Player{
+		MaskObj:         NewMask(),
 		SpriteStand:     r.LoadTexture("assets/playerTest.png"),
 		SpriteDuck:      r.LoadTexture("assets/playerDuck.png"),
 		Space:           resolv.NewSpace(),
@@ -53,9 +57,10 @@ func setupPlayer() *Player {
 
 // NewPlayer creates a player struct, loading the player sprite texture and generates
 // the collision space for the player
-func NewPlayer(x, y int, deathFunc func()) *Player {
+func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	p := setupPlayer()
-
+	p.MaskObj.setMovePattern("test")
+	// Create Mask to follow player
 	// Set the death function that'll be called when the player dies.
 	p.deathFunc = deathFunc
 
@@ -79,11 +84,15 @@ func NewPlayer(x, y int, deathFunc func()) *Player {
 	// Add to collision boxes to player space.
 	p.Add(p.Collision)
 
+	// Saves the ground
+	// for collision detection with player
+	p.Ground = ground
+
 	return p
 }
 
 // movePlayer handles key binded events involving the movement of the character
-func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
+func (p *Player) movePlayer() r.Vector2 {
 
 	// Left/Right Movement
 	p.SpeedY += 0.5
@@ -101,6 +110,7 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 		p.SpeedX = 0
 	}
 
+	// Controller Events
 	if r.IsKeyDown(r.KeyD) {
 		p.SpeedX += accel
 		p.Facing = common.Right
@@ -112,6 +122,7 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 		p.state = common.StateLeft
 	}
 
+	// Speed Limit
 	if p.SpeedX > maxSpd {
 		p.SpeedX = maxSpd
 	}
@@ -119,8 +130,8 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 		p.SpeedX = -maxSpd
 	}
 
-	// Jumping
-	down := ground.Resolve(p.Collision, 0, 4)
+	// JUMPING
+	down := p.Ground.Resolve(p.Collision, 0, 4)
 	onGround := down.Colliding()
 
 	if r.IsKeyPressed(r.KeyW) && onGround {
@@ -130,37 +141,42 @@ func (p *Player) movePlayer(ground *resolv.Space) r.Vector2 {
 	x := int32(p.SpeedX)
 	y := int32(p.SpeedY)
 
-	// if res := ground.Resolve(p.Collision, x, 0); res.Colliding() {
-	// 	x = res.ResolveX
-	// 	p.SpeedX = 0
-	// }
+	// Check wall collision
+	//TODO this collision check can be posibly handled in the plane struct
+	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
+		x = res.ResolveX
+		p.SpeedX = 0
+	}
 
-	p.Collision.X += x
-
-	res := ground.Resolve(p.Collision, 0, y+4)
+	res := p.Ground.Resolve(p.Collision, 0, y+4)
 
 	if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
 		res = resolv.Collision{}
 	}
 	if !res.Colliding() {
-		res = ground.Resolve(p.Collision, 0, y)
+		res = p.Ground.Resolve(p.Collision, 0, y)
 	}
 
 	if res.Colliding() {
 		y = res.ResolveY
 		p.SpeedY = 0
 	}
+	p.Collision.X += x
 	p.Collision.Y += y
 
 	// Crouching
 	// Changes to crouch sprite and hurtboxes
 	if r.IsKeyDown(r.KeyS) {
+
 		p.isCrouched = true
 		p.state = common.StateCrouch
 	} else {
 		p.isCrouched = false
 	}
 
+	if r.IsKeyReleased(r.KeyS) {
+		p.Collision.Y -= (p.SpriteStand.Height / 2)
+	}
 	return r.NewVector2(float32(x), float32(y))
 }
 
@@ -190,15 +206,23 @@ func (p *Player) attack() {
 		p.Hitbox.SetXY(p.Collision.X, p.Collision.Y+p.Collision.H/3.0)
 	}
 
-	p.attackBefore = time.Now() // Reset timer
+	p.attackBefore = time.Now() // Reset timerS
 	p.Add(p.Hitbox)
 	p.isAttacking = true
 }
 
-func (p *Player) Update(ground *resolv.Space) (r.Vector2, r.Vector2) {
+func (p *Player) Update() (r.Vector2, r.Vector2) {
 	p.state = common.StateIdle
 
-	diff := p.movePlayer(ground)
+	diff := p.movePlayer()
+
+	maskTar := r.Vector2{
+		X: float32(p.Collision.X),
+		Y: float32(p.Collision.Y),
+	}
+	p.MaskObj.checkDirection(maskTar, p.Facing)
+	p.MaskObj.Update()
+
 	p.checkAttack()
 	//p.checkInAir(ground)
 
@@ -207,6 +231,7 @@ func (p *Player) Update(ground *resolv.Space) (r.Vector2, r.Vector2) {
 
 // Draw creates a rectangle using Raylib and draws the outline of it.
 func (p *Player) Draw() {
+	p.MaskObj.Draw()
 	//p.Collision.SetXY()
 	x, y := p.Collision.GetXY()
 
@@ -215,6 +240,7 @@ func (p *Player) Draw() {
 		p.Collision.W = p.SpriteDuck.Width
 		r.DrawTexture(p.SpriteDuck, int(x), int(y), r.White)
 	} else {
+
 		p.Collision.H = p.SpriteStand.Height
 		p.Collision.W = p.SpriteStand.Width
 		r.DrawTexture(p.SpriteStand, int(x), int(y), r.White)

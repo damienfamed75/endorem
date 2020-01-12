@@ -4,7 +4,12 @@
             "width": 800,
             "height": 600
         },
-        "volume": 100
+        "camera": {
+            "defaultZoom": 2.0,
+            "defaultSpeed": 0.1
+        },
+        "volume": 100,
+        "defaultScene": "level one"
     },
     "player": {
         "addedHealth": 0,
