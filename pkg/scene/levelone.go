@@ -35,9 +35,15 @@ func (l *LevelOne) Preload() {
 	l.mapData, l.rooms = common.GenerateMap(1)
 	mapScale := 34
 
-	spawnRoom := l.rooms[0]
+	var spawnRoom common.RoomSpec
+	for i := range l.rooms {
+		if l.rooms[i].Size == -1 {
+			spawnRoom = l.rooms[i]
+		}
+	}
 
-	x, y := (spawnRoom.X*mapScale)+int(34), (spawnRoom.Y*mapScale)+int(34*2)
+	// +1 to Y so player doesn't shoot up the ceiling collider.
+	x, y := (spawnRoom.X * mapScale), ((spawnRoom.Y + 1) * mapScale)
 
 	l.player = player.NewPlayer(x, y, func() {}, l.ground)
 	l.camera = common.NewEndoCamera(l.player.Collision)
