@@ -9,7 +9,7 @@ import (
 
 // GenerateMap creates a new completely random map.
 func GenerateMap() (*dngn.Room, []RoomSpec) {
-	sceneMap := dngn.NewRoom(80, 40)
+	sceneMap := dngn.NewRoom(60, 30)
 	// sceneMap := dngn.NewRoom(40, 20)
 
 	// treasure room (x,y,x2,y2)
@@ -95,20 +95,25 @@ func findRooms(sceneMap *dngn.Room) []RoomSpec {
 func newMap(sceneMap *dngn.Room) []RoomSpec {
 	sceneMap.Select().Fill('#')
 
-	// sceneMap.GenerateDrunkWalk(' ', 0.5)
-	// rooms := sceneMap.GenerateRandomRooms(' ', 80, 4, 4, 5, 5, true)
-	sceneMap.GenerateRandomRooms(' ', 24, 4, 4, 5, 5, true)
+	// IMPORTANT -----------------------------------------------------------------
+	// sceneMap.GenerateDrunkWalk(' ', 0.8)
+	// sceneMap.GenerateRandomRooms(' ', 80, 4, 4, 6, 6, true)
+	sceneMap.GenerateDrunkWalk(' ', 0.2)
+	sceneMap.GenerateDrunkWalk(' ', 0.2)
+	// sceneMap.GenerateRandomRooms(' ', 24, 4, 4, 5, 5, true)
 	fmt.Printf("MAP: Map Generation 1 Complete!\n")
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		sceneMap.Select().Degrade(' ')
 		// sceneMap.Select().Degrade('#')
 	}
 
-	// for i := 0; i < 3; i++ {
-	// 	sceneMap.Select().ByRune(' ').ByNeighbor('#', 3, false).Fill('#')
-	// }
+	for i := 0; i < 3; i++ {
+		sceneMap.Select().ByRune(' ').ByNeighbor('#', 3, false).Fill('#')
+	}
 
-	sceneMap.GenerateBSP('#', '-', 80)
+	// IMPORTANT -----------------------------------------------------------------
+	sceneMap.GenerateBSP('#', '-', 100)
+	// sceneMap.GenerateBSP('#', '-', 80)
 	fmt.Printf("MAP: Map Generation 2 Complete!\n")
 
 	rooms := findRooms(sceneMap)
@@ -120,12 +125,11 @@ func newMap(sceneMap *dngn.Room) []RoomSpec {
 		if sceneMap.Get(x, y+1) == ' ' || sceneMap.Get(x, y+1) == ':' {
 			sceneMap.Set(x, y, '^')
 
-			if (sceneMap.Get(x, y+2) == ' ' || sceneMap.Get(x, y+2) == ':') && (sceneMap.Get(x, y+3) == ' ' || sceneMap.Get(x, y+3) == ':') {
-				sceneMap.Set(x, y+2, '=')
+			offset := 2
+			for (sceneMap.Get(x, y+offset) == ' ' || sceneMap.Get(x, y+offset) == ':') && (sceneMap.Get(x, y+offset+1) == ' ' || sceneMap.Get(x, y+offset+1) == ':') {
+				sceneMap.Set(x, y+offset, '=')
 
-				if sceneMap.Get(x, y+4) == ' ' {
-					sceneMap.Set(x, y+4, '=')
-				}
+				offset += 2
 			}
 
 			return true
@@ -134,10 +138,18 @@ func newMap(sceneMap *dngn.Room) []RoomSpec {
 		// Wall doors with no ledges
 		if sceneMap.Get(x+1, y+1) == ' ' || sceneMap.Get(x-1, y+1) == ' ' {
 			// Door ledges.
-			sceneMap.Set(x+1, y+1, '#')
-			sceneMap.Set(x-1, y+1, '#')
+			if sceneMap.Get(x+1, y+2) != '^' || sceneMap.Get(x+1, y+2) != '-' {
+				sceneMap.Set(x+1, y+1, '#')
+			}
+			if sceneMap.Get(x-1, y+2) != '^' || sceneMap.Get(x-1, y+2) != '-' {
+				sceneMap.Set(x-1, y+1, '#')
+			}
 
-			// Floating ledges to get to the doore ledges.
+			// Remove walls too close to doors.
+			sceneMap.Set(x-2, y, ' ')
+			sceneMap.Set(x+2, y, ' ')
+
+			// Floating ledges to get to the door ledges.
 			if sceneMap.Get(x-2, y+2) == ' ' && sceneMap.Get(x-2, y+3) != '^' {
 				sceneMap.Set(x-2, y+2, '~')
 			}
@@ -153,6 +165,9 @@ func newMap(sceneMap *dngn.Room) []RoomSpec {
 	sceneMap.Select().ByRune('-').By(func(x, y int) bool {
 		ya := y + 1
 
+		sceneMap.Set(x-1, y, ' ')
+		sceneMap.Set(x+1, y, ' ')
+
 		for sceneMap.Get(x, ya) == ' ' || sceneMap.Get(x, ya) == ':' {
 			sceneMap.Set(x, ya, '#')
 			ya++
@@ -164,6 +179,13 @@ func newMap(sceneMap *dngn.Room) []RoomSpec {
 			sceneMap.Set(x, ya, '#')
 			ya--
 		}
+
+		return false
+	})
+
+	sceneMap.Select().ByRune('^').By(func(x, y int) bool {
+		sceneMap.Set(x, y+1, ' ')
+		sceneMap.Set(x, y-1, ' ')
 
 		return false
 	})

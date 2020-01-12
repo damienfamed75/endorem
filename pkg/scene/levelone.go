@@ -16,25 +16,32 @@ var (
 )
 
 type LevelOne struct {
-	mapData *dngn.Room
-	rooms   []common.RoomSpec
-	player  *player.Player
-	ground  *resolv.Space
-	world   *resolv.Space
-	camera  *common.EndoCamera
+	mapData     *dngn.Room
+	rooms       []common.RoomSpec
+	player      *player.Player
+	ground      *resolv.Space
+	world       *resolv.Space
+	camera      *common.EndoCamera
+	overviewCam r.Camera2D
 }
 
 func (l *LevelOne) Preload() {
+	l.overviewCam = r.Camera2D{
+		Rotation: 0,
+		Zoom:     0.25,
+	}
+
 	l.world = resolv.NewSpace()
 	l.ground = resolv.NewSpace()
 
 	l.mapData, l.rooms = common.GenerateMap()
-	mapScale := 48
+	mapScale := 34
 	// mapScale := 32
 
 	spawnRoom := l.rooms[0]
 
-	x, y := (spawnRoom.X2-(spawnRoom.X/2))*mapScale, (spawnRoom.Y2-(spawnRoom.Y/2))*mapScale
+	// x, y := (spawnRoom.X2-(spawnRoom.X/2))*mapScale, (spawnRoom.Y2-(spawnRoom.Y/2))*mapScale
+	x, y := (spawnRoom.X*mapScale)+int(132), (spawnRoom.Y*mapScale)+int(132)
 
 	_, _ = x, y
 
@@ -43,20 +50,52 @@ func (l *LevelOne) Preload() {
 	l.player = player.NewPlayer(x, y, func() {}, l.ground, resolv.NewSpace())
 	l.camera = common.NewEndoCamera(l.player.Collision)
 	l.camera.Zoom = 1
-	vv := r.GetScreenToWorld2D(r.NewVector2(float32(l.player.Collision.X), float32(l.player.Collision.Y)), l.camera.Camera2D)
-	l.camera.Offset = vv.Divide(2)
+	// vv := r.GetScreenToWorld2D(r.NewVector2(float32(l.player.Collision.X), float32(l.player.Collision.Y)), l.camera.Camera2D)
+	// l.camera.Offset = vv.Divide(2)
 	// l.camera.Offset.X /= 4
-	l.camera.Offset.X /= 8
+	// l.camera.Offset.X /= 8
 	// l.camera.Zoom = 1.0
 
 	l.mapData.Select().By(func(x, y int) bool {
 		switch l.mapData.Get(x, y) {
-		case '#':
+		case '#': // Wall
 			l.ground.Add(
 				testing.NewSolidPlane(
 					int32(x*mapScale), int32(y*mapScale),
 					int32(mapScale), int32(mapScale),
 					r.Aqua,
+				),
+			)
+		case '-': // Door
+			l.ground.Add(
+				testing.NewPlane(
+					int32(x*mapScale), int32(y*mapScale),
+					int32(mapScale), int32(mapScale),
+					r.Orange,
+				),
+			)
+		case '^': // Hatches
+			l.ground.Add(
+				testing.NewPlane(
+					int32(x*mapScale), int32(y*mapScale),
+					int32(mapScale), int32(mapScale),
+					r.Gold,
+				),
+			)
+		case '=': // Floating Platform 1
+			l.ground.Add(
+				testing.NewSolidPlane(
+					int32(x*mapScale), int32(y*mapScale),
+					int32(mapScale), int32(mapScale),
+					r.GopherBlue,
+				),
+			)
+		case '~': // Floating Platform 2
+			l.ground.Add(
+				testing.NewSolidPlane(
+					int32(x*mapScale), int32(y*mapScale),
+					int32(mapScale), int32(mapScale),
+					r.SkyBlue,
 				),
 			)
 		}
@@ -73,7 +112,8 @@ func (l *LevelOne) Update(dt float32) {
 }
 
 func (l *LevelOne) Draw() {
-	r.BeginMode2D(l.camera.Camera2D)
+	r.BeginMode2D(l.overviewCam)
+	// r.BeginMode2D(l.camera.Camera2D)
 	r.ClearBackground(r.Black)
 
 	for i := range *l.ground {
