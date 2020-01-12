@@ -211,7 +211,7 @@ func (p *Player) attack() {
 	p.isAttacking = true
 }
 
-func (p *Player) Update(dt float32) (r.Vector2, r.Vector2) {
+func (p *Player) Update() (r.Vector2, r.Vector2) {
 	p.state = common.StateIdle
 
 	diff := p.movePlayer()

@@ -61,7 +61,7 @@ func (s *MenuScene) Preload() {
 // Update frames
 func (s *MenuScene) Update(dt float32) {
 	// s.camera.Update(s.player.Update())
-	s.player.Update(dt)
+	s.player.Update()
 	s.checkTransitions()
 }
 
