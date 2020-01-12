@@ -47,7 +47,7 @@ func (s *TestingScene) Preload() {
 // Update frames
 func (s *TestingScene) Update(dt float32) {
 	// Update the camera and player.
-	s.camera.Update(s.player.Update())
+	s.camera.Update(s.player.Update(dt))
 
 	// Update all the enemies.
 	for i := range *s.enemies {
