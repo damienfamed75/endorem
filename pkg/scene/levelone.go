@@ -34,20 +34,11 @@ func (l *LevelOne) Preload() {
 
 	l.mapData, l.rooms = common.GenerateMap(1)
 	mapScale := 34
-	// mapScale := 32
-
-	// common.InsertBossOneRoom(l.mapData, l.rooms)
 
 	spawnRoom := l.rooms[0]
 
-	// x, y := (spawnRoom.X2-(spawnRoom.X/2))*mapScale, (spawnRoom.Y2-(spawnRoom.Y/2))*mapScale
 	x, y := (spawnRoom.X*mapScale)+int(34), (spawnRoom.Y*mapScale)+int(34*2)
-	// x, y := (spawnRoom.X*mapScale)+int(50), (spawnRoom.Y*mapScale)+int(50)
 
-	_, _ = x, y
-
-	// fmt.Println("SPAWNX:", x)
-	// l.player = player.NewPlayer(x, y, func() {}, l.ground, resolv.NewSpace())
 	l.player = player.NewPlayer(x, y, func() {}, l.ground, resolv.NewSpace())
 	l.camera = common.NewEndoCamera(l.player.Collision)
 
