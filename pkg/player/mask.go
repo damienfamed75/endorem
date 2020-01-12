@@ -6,6 +6,7 @@ import (
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
+// Mask handles the companion character that follows the player
 type Mask struct {
 	Sprite      r.Texture2D
 	movePattern string
@@ -29,6 +30,7 @@ func setupMask() *Mask {
 	}
 }
 
+// NewMask returns a configured Mask entity
 func NewMask() *Mask {
 	m := setupMask()
 
@@ -53,9 +55,13 @@ func (m *Mask) checkDirection(diff r.Vector2, pFacing common.Direction) {
 	}
 	m.target = newTarget
 }
+
+// Update Mask
 func (m *Mask) Update() {
 	m.current = m.current.Lerp(m.target, 0.1)
 }
+
+// Draw Mask at new frame
 func (m *Mask) Draw() {
 	r.DrawTexture(m.Sprite, int(m.current.X), int(m.current.Y), r.White)
 	//log.Print("m draw")
