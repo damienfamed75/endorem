@@ -38,10 +38,13 @@ func NewEndoCamera(playerColl *resolv.Rectangle) *EndoCamera {
 // Update changes the offset position of the camera and the target.
 func (e *EndoCamera) Update(diff, curr r.Vector2) {
 	// Update camera offset coordinates for it to move.
-	e.Offset.X -= diff.X * e.Zoom
-	e.Offset.Y -= diff.Y * e.Zoom
+	xOff, yOff := -float32(curr.X+4)*e.Zoom, -float32(curr.Y+8)*e.Zoom
+	e.Offset = r.NewVector2(
+		xOff+float32(r.GetScreenWidth()),
+		yOff+float32(r.GetScreenHeight()),
+	)
 
 	// Reset the camera's target to the player's current position.
 	// Using a lerp to make the camera movement smoother.
-	e.Target = e.Target.Lerp(curr, e.LerpAmount)
+	e.Target = e.Target.Lerp(curr, 0.1)
 }
