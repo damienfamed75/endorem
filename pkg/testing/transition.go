@@ -1,8 +1,6 @@
 package testing
 
 import (
-	"log"
-
 	"github.com/SolarLune/resolv/resolv"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
@@ -13,10 +11,9 @@ const (
 )
 
 type Transition struct {
-	TransitionType string
-	Color          r.Color
-	Width          int32
-	Height         int32
+	Color  r.Color
+	Width  int32
+	Height int32
 
 	collided bool
 	*resolv.Space
@@ -28,6 +25,7 @@ func NewTransition(x, y, w, h int32, TransitionType string) *Transition {
 	transitionSpace.Add(
 		resolv.NewRectangle(x, y, w, h),
 	)
+
 	return &Transition{
 		Space: transitionSpace,
 		Color: r.Green,
@@ -37,16 +35,6 @@ func NewTransition(x, y, w, h int32, TransitionType string) *Transition {
 	}
 }
 
-func (t *Transition) HandleCollision() {
-
-	// Handle Event if collided
-	switch t.TransitionType {
-	case ExitTransition:
-		log.Print("EXIT GAME")
-	case SceneTransition:
-		log.Print("TRANSITION TO NEW SCENE")
-	}
-}
 func (t *Transition) Draw() {
 	x, y := t.Space.GetXY()
 
