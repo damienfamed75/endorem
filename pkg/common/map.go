@@ -7,8 +7,15 @@ import (
 	"github.com/SolarLune/dngn"
 )
 
+// RoomSpec is enough information to fill and locate rooms around the map.
+type RoomSpec struct {
+	X, Y, X2, Y2 int
+	Size         int
+	Selection    dngn.Selection
+}
+
 // GenerateMap creates a new completely random map.
-func GenerateMap() (*dngn.Room, []RoomSpec) {
+func GenerateMap(bossroom int) (*dngn.Room, []RoomSpec) {
 	sceneMap := dngn.NewRoom(60, 30)
 	// sceneMap := dngn.NewRoom(40, 20)
 
@@ -17,14 +24,110 @@ func GenerateMap() (*dngn.Room, []RoomSpec) {
 	// player spawn (x,y)
 	rooms := newMap(sceneMap)
 
-	return sceneMap, rooms
+	switch bossroom {
+	case 1:
+		return InsertBossOneRoom(sceneMap, rooms)
+	default:
+		return sceneMap, rooms
+	}
+
+	// return sceneMap, rooms
 }
 
-// RoomSpec is enough information to fill and locate rooms around the map.
-type RoomSpec struct {
-	X, Y, X2, Y2 int
-	Size         int
-	Selection    dngn.Selection
+func InsertBossOneRoom(sceneMap *dngn.Room, rooms []RoomSpec) (*dngn.Room, []RoomSpec) {
+	var (
+		direction string
+		xO, yO    int
+
+		roomWidth, roomHeight = 20, 10
+	)
+
+	sceneMap.Select().ByRune('#').By(func(x, y int) bool {
+		if direction != "" {
+			return false
+		}
+
+		switch x {
+		// case 0: // Build left?
+		// if sceneMap.Get(x+1, y) == ' ' {
+		// 	direction = "left"
+		// }
+		case sceneMap.Width - 1:
+			fallthrough
+		case sceneMap.Width: // Build right?
+			if sceneMap.Get(x-1, y) == ' ' {
+				direction = "right"
+				xO, yO = x, y
+			}
+		}
+
+		switch y {
+		// case 0: // Build up?
+		// 	if sceneMap.Get(x, y+1) == ' ' {
+		// 		direction = "up"
+		// 	}
+		case sceneMap.Height - 1: // Build down?
+			fallthrough
+		case sceneMap.Height: // Build down?
+			if sceneMap.Get(x, y-1) == ' ' {
+				direction = "down"
+				xO, yO = x, y
+			}
+		}
+
+		return false
+	})
+
+	fmt.Printf("DIRECTION: [%s]\n", direction)
+
+	var newScene *dngn.Room
+
+	switch direction {
+	// case "left":
+	// 	fallthrough
+	case "right":
+		newScene = dngn.NewRoom(sceneMap.Width+roomWidth+1, sceneMap.Height)
+		// newScene = dngn.NewRoom(sceneMap.Width+50, sceneMap.Height)
+
+	// case "up":
+	// 	fallthrough
+	case "down":
+		newScene = dngn.NewRoom(sceneMap.Width, sceneMap.Height+roomHeight+1)
+	default:
+		newSceneMap := dngn.NewRoom(60, 30)
+		newRooms := newMap(newSceneMap)
+		return InsertBossOneRoom(newSceneMap, newRooms)
+	}
+
+	switch direction {
+	// case "left":
+	// newScene.CopyFrom(sceneMap, 50, 0)
+	// newScene.Select().ByArea(0, 0, 50, sceneMap.Height).Fill('*')
+	// fallthrough
+	case "right":
+		newScene.CopyFrom(sceneMap, 0, 0)
+		newScene.Set(xO, yO, '}')
+		newScene.Select().ByArea(sceneMap.Width, 0, roomWidth+1, sceneMap.Height).Fill('#')
+		newScene.Select().ByArea(sceneMap.Width, yO, roomWidth, roomHeight).Fill(' ')
+	// case "up":
+	// 	newScene.CopyFrom(sceneMap, 0, 100)
+	case "down":
+		newScene.CopyFrom(sceneMap, 0, 0)
+		newScene.Set(xO, yO, '}')
+		newScene.Select().ByArea(0, sceneMap.Height, sceneMap.Width, roomHeight+1).Fill('#')
+		newScene.Select().ByArea(xO, sceneMap.Height, roomWidth, roomHeight).Fill(' ')
+	}
+
+	fmt.Println(newScene.DataToString())
+
+	// Ensure that the map doesn't have any missing floors, ceilings, or walls.
+	drawMapBorders(newScene)
+
+	fmt.Printf("MAP: Map Successfully Generated!\n")
+
+	debugMap(newScene.DataToString())
+
+	return newScene, rooms
 }
 
 func findRooms(sceneMap *dngn.Room) []RoomSpec {
@@ -68,7 +171,7 @@ func findRooms(sceneMap *dngn.Room) []RoomSpec {
 				fmt.Printf("Room found\n")
 				room := sceneMap.Select().ByArea(x, y, xa-x+1, ya-y+1).ByRune(' ')
 
-				room.Fill(':')
+				// room.Fill(':')
 
 				// Remove the found room from the selection so then it doesn't
 				// get scanned twice.
@@ -192,23 +295,28 @@ func newMap(sceneMap *dngn.Room) []RoomSpec {
 
 	fmt.Printf("MAP: Exceptions Marked!\n")
 
+	drawMapBorders(sceneMap)
+
+	return rooms
+}
+
+func drawMapBorders(sceneMap *dngn.Room) {
 	// Draw borders around the map.
 	sceneMap.DrawLine(0, 0, 0, len(sceneMap.Data), '#', 1, false)
 	sceneMap.DrawLine(0, 0, len(sceneMap.Data[0]), 0, '#', 1, false)
 	sceneMap.DrawLine(len(sceneMap.Data[0]), 0, len(sceneMap.Data[0]), len(sceneMap.Data), '#', 1, false)
 	sceneMap.DrawLine(0, len(sceneMap.Data), len(sceneMap.Data[0]), len(sceneMap.Data), '#', 1, false)
-
-	fmt.Printf("MAP: Map Successfully Generated!\n")
-
-	debugMap(sceneMap.DataToString())
-
-	return rooms
 }
 
 func debugMap(data string) {
 	data = strings.Replace(data, "X", "\033[1;34mX\033[0m", -1)
 	data = strings.Replace(data, "Y", "\033[1;31mY\033[0m", -1)
 	data = strings.Replace(data, ":", "\033[1;32m:\033[0m", -1)
+	data = strings.Replace(data, "^", "\033[1;33m^\033[0m", -1)
+	data = strings.Replace(data, "-", "\033[1;33m-\033[0m", -1)
+	data = strings.Replace(data, "}", "\033[1;33m}\033[0m", -1)
+	data = strings.Replace(data, "~", "\033[1;34m~\033[0m", -1)
+	data = strings.Replace(data, "=", "\033[1;34m=\033[0m", -1)
 
 	fmt.Println(data)
 }

@@ -28,20 +28,23 @@ type LevelOne struct {
 func (l *LevelOne) Preload() {
 	l.overviewCam = r.Camera2D{
 		Rotation: 0,
-		Zoom:     0.25,
+		Zoom:     0.35,
 	}
 
 	l.world = resolv.NewSpace()
 	l.ground = resolv.NewSpace()
 
-	l.mapData, l.rooms = common.GenerateMap()
+	l.mapData, l.rooms = common.GenerateMap(1)
 	mapScale := 34
 	// mapScale := 32
+
+	// common.InsertBossOneRoom(l.mapData, l.rooms)
 
 	spawnRoom := l.rooms[0]
 
 	// x, y := (spawnRoom.X2-(spawnRoom.X/2))*mapScale, (spawnRoom.Y2-(spawnRoom.Y/2))*mapScale
-	x, y := (spawnRoom.X*mapScale)+int(132), (spawnRoom.Y*mapScale)+int(132)
+	x, y := (spawnRoom.X*mapScale)+int(34), (spawnRoom.Y*mapScale)+int(34*2)
+	// x, y := (spawnRoom.X*mapScale)+int(50), (spawnRoom.Y*mapScale)+int(50)
 
 	_, _ = x, y
 
@@ -49,7 +52,7 @@ func (l *LevelOne) Preload() {
 	// l.player = player.NewPlayer(x, y, func() {}, l.ground, resolv.NewSpace())
 	l.player = player.NewPlayer(x, y, func() {}, l.ground, resolv.NewSpace())
 	l.camera = common.NewEndoCamera(l.player.Collision)
-	l.camera.Zoom = 1
+	// l.camera.Zoom = 1
 	// vv := r.GetScreenToWorld2D(r.NewVector2(float32(l.player.Collision.X), float32(l.player.Collision.Y)), l.camera.Camera2D)
 	// l.camera.Offset = vv.Divide(2)
 	// l.camera.Offset.X /= 4
