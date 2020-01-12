@@ -24,6 +24,7 @@ func main() {
 	// level 3
 	g.RegisterScenes(&scene.TestingScene{})
 	g.RegisterScenes(&scene.MenuScene{})
+	g.RegisterScenes(&scene.LevelOne{})
 
 	// Initialize raylib window.
 	r.InitWindow(

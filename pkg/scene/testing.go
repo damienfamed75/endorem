@@ -1,12 +1,12 @@
 package scene
 
 import (
-	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
 	"github.com/damienfamed75/endorem/pkg/enemy"
 	"github.com/damienfamed75/endorem/pkg/player"
 	"github.com/damienfamed75/endorem/pkg/testing"
 
+	"github.com/SolarLune/resolv/resolv"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
