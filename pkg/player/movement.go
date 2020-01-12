@@ -59,7 +59,7 @@ func setupPlayer() *Player {
 // the collision space for the player
 func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	p := setupPlayer()
-
+	p.MaskObj.setMovePattern("test")
 	// Create Mask to follow player
 	// Set the death function that'll be called when the player dies.
 	p.deathFunc = deathFunc
@@ -215,7 +215,14 @@ func (p *Player) Update() (r.Vector2, r.Vector2) {
 	p.state = common.StateIdle
 
 	diff := p.movePlayer()
-	p.MaskObj.followPlayer(p.Collision.X, p.Collision.Y)
+
+	maskTar := r.Vector2{
+		X: float32(p.Collision.X),
+		Y: float32(p.Collision.Y),
+	}
+	p.MaskObj.checkDirection(maskTar, p.Facing)
+	p.MaskObj.Update()
+
 	p.checkAttack()
 	//p.checkInAir(ground)
 
