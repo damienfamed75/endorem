@@ -167,12 +167,16 @@ func (p *Player) movePlayer() r.Vector2 {
 	// Crouching
 	// Changes to crouch sprite and hurtboxes
 	if r.IsKeyDown(r.KeyS) {
+
 		p.isCrouched = true
 		p.state = common.StateCrouch
 	} else {
 		p.isCrouched = false
 	}
 
+	if r.IsKeyReleased(r.KeyS) {
+		p.Collision.Y -= (p.SpriteStand.Height / 2)
+	}
 	return r.NewVector2(float32(x), float32(y))
 }
 
@@ -229,6 +233,7 @@ func (p *Player) Draw() {
 		p.Collision.W = p.SpriteDuck.Width
 		r.DrawTexture(p.SpriteDuck, int(x), int(y), r.White)
 	} else {
+
 		p.Collision.H = p.SpriteStand.Height
 		p.Collision.W = p.SpriteStand.Width
 		r.DrawTexture(p.SpriteStand, int(x), int(y), r.White)
