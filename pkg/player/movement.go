@@ -27,6 +27,7 @@ type Player struct {
 	Ground   *resolv.Space
 	onGround bool
 
+	madeJump        bool
 	isAttacking     bool
 	isCrouched      bool
 	deathFunc       func()
@@ -196,6 +197,10 @@ func (p *Player) playerJump() {
 
 	if r.IsKeyPressed(r.KeyW) && p.onGround {
 		p.SpeedY = -8
+		p.madeJump = true
+	} else if r.IsKeyPressed(r.KeyW) && p.madeJump {
+		p.SpeedY = -8
+		p.madeJump = false
 	}
 }
 func (p *Player) checkAttack() {
