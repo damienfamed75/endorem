@@ -9,7 +9,8 @@ import (
 
 // GenerateMap creates a new completely random map.
 func GenerateMap() (*dngn.Room, []RoomSpec) {
-	sceneMap := dngn.NewRoom(40, 20)
+	sceneMap := dngn.NewRoom(80, 40)
+	// sceneMap := dngn.NewRoom(40, 20)
 
 	// treasure room (x,y,x2,y2)
 	// boss room (x,y,x2,y2)
@@ -21,9 +22,9 @@ func GenerateMap() (*dngn.Room, []RoomSpec) {
 
 // RoomSpec is enough information to fill and locate rooms around the map.
 type RoomSpec struct {
-	x, y, x2, y2 int
-	size         int
-	selection    dngn.Selection
+	X, Y, X2, Y2 int
+	Size         int
+	Selection    dngn.Selection
 }
 
 func findRooms(sceneMap *dngn.Room) []RoomSpec {
@@ -76,9 +77,9 @@ func findRooms(sceneMap *dngn.Room) []RoomSpec {
 				// Make sure that the room is valid size.
 				if len(room.Cells) > 0 {
 					foundRooms = append(foundRooms, RoomSpec{
-						x: x, y: y, x2: xa, y2: ya,
-						size:      len(room.Cells) * len(room.Cells[0]),
-						selection: room,
+						X: x, Y: y, X2: xa, Y2: ya,
+						Size:      len(room.Cells) * len(room.Cells[0]),
+						Selection: room,
 					})
 				}
 			}
@@ -99,13 +100,13 @@ func newMap(sceneMap *dngn.Room) []RoomSpec {
 	sceneMap.GenerateRandomRooms(' ', 24, 4, 4, 5, 5, true)
 	fmt.Printf("MAP: Map Generation 1 Complete!\n")
 	for i := 0; i < 10; i++ {
-		// sceneMap.Select().Degrade(' ')
-		sceneMap.Select().Degrade('#')
+		sceneMap.Select().Degrade(' ')
+		// sceneMap.Select().Degrade('#')
 	}
 
-	for i := 0; i < 3; i++ {
-		sceneMap.Select().ByRune(' ').ByNeighbor('#', 3, false).Fill('#')
-	}
+	// for i := 0; i < 3; i++ {
+	// 	sceneMap.Select().ByRune(' ').ByNeighbor('#', 3, false).Fill('#')
+	// }
 
 	sceneMap.GenerateBSP('#', '-', 80)
 	fmt.Printf("MAP: Map Generation 2 Complete!\n")
@@ -116,10 +117,10 @@ func newMap(sceneMap *dngn.Room) []RoomSpec {
 
 	sceneMap.Select().ByRune('-').By(func(x, y int) bool {
 		// Ceiling or floor doors.
-		if sceneMap.Get(x, y+1) == ' ' {
+		if sceneMap.Get(x, y+1) == ' ' || sceneMap.Get(x, y+1) == ':' {
 			sceneMap.Set(x, y, '^')
 
-			if sceneMap.Get(x, y+2) == ' ' && sceneMap.Get(x, y+3) == ' ' {
+			if (sceneMap.Get(x, y+2) == ' ' || sceneMap.Get(x, y+2) == ':') && (sceneMap.Get(x, y+3) == ' ' || sceneMap.Get(x, y+3) == ':') {
 				sceneMap.Set(x, y+2, '=')
 
 				if sceneMap.Get(x, y+4) == ' ' {
@@ -152,14 +153,14 @@ func newMap(sceneMap *dngn.Room) []RoomSpec {
 	sceneMap.Select().ByRune('-').By(func(x, y int) bool {
 		ya := y + 1
 
-		for sceneMap.Get(x, ya) == ' ' {
+		for sceneMap.Get(x, ya) == ' ' || sceneMap.Get(x, ya) == ':' {
 			sceneMap.Set(x, ya, '#')
 			ya++
 		}
 
 		ya = y - 1
 
-		for sceneMap.Get(x, ya) == ' ' {
+		for sceneMap.Get(x, ya) == ' ' || sceneMap.Get(x, ya) == ':' {
 			sceneMap.Set(x, ya, '#')
 			ya--
 		}
