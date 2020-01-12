@@ -18,6 +18,7 @@ type LevelOne struct {
 	rooms       []common.RoomSpec
 	player      *player.Player
 	ground      *resolv.Space
+	doors       *resolv.Space
 	world       *resolv.Space
 	camera      *common.EndoCamera
 	overviewCam r.Camera2D
@@ -31,6 +32,7 @@ func (l *LevelOne) Preload() {
 
 	l.world = resolv.NewSpace()
 	l.ground = resolv.NewSpace()
+	l.doors = resolv.NewSpace()
 
 	l.mapData, l.rooms = common.GenerateMap(1)
 	mapScale := 34
@@ -59,7 +61,7 @@ func (l *LevelOne) Preload() {
 				),
 			)
 		case '-': // Door
-			l.ground.Add(
+			l.doors.Add(
 				testing.NewPlane(
 					int32(x*mapScale), int32(y*mapScale),
 					int32(mapScale), int32(mapScale),
@@ -67,7 +69,7 @@ func (l *LevelOne) Preload() {
 				),
 			)
 		case '^': // Hatches
-			l.ground.Add(
+			l.doors.Add(
 				testing.NewPlane(
 					int32(x*mapScale), int32(y*mapScale),
 					int32(mapScale), int32(mapScale),
@@ -100,7 +102,6 @@ func (l *LevelOne) Preload() {
 
 func (l *LevelOne) Update(dt float32) {
 	l.camera.Update(l.player.Update())
-	// l.camera.Offset.Y += 2
 }
 
 func (l *LevelOne) Draw() {
@@ -111,9 +112,11 @@ func (l *LevelOne) Draw() {
 	for i := range *l.ground {
 		(*l.ground)[i].(Drawer).Draw()
 	}
+	for i := range *l.doors {
+		(*l.doors)[i].(Drawer).Draw()
+	}
+
 	l.player.Draw()
-	r.DrawCircleLines(int(l.camera.Target.X), int(l.camera.Target.Y), 50, r.Red)
-	// r.DrawCircle(int(l.camera.Offset.X), int(l.camera.Offset.Y), 50, r.Red)
 
 	r.EndMode2D()
 }
