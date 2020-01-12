@@ -1,3 +1,8 @@
+// +build !windows
+
+// Until we find out that linux breaks, this version of the camera will build on
+// anything that's NOT Windows.
+
 package common
 
 import (
@@ -11,12 +16,9 @@ type EndoCamera struct {
 	r.Camera2D
 }
 
-// type EndoCamera r.Camera2D
-
 // NewEndoCamera creates a default offset of the player's position.
 func NewEndoCamera(playerColl *resolv.Rectangle) *EndoCamera {
 	defaultZoom := GlobalConfig.Game.Camera.DefaultZoom
-	// offsetMultiplier := defaultZoom - 0.5 // 0.5 tries to center the Y of cam
 
 	// Get the center coordinates of the player collision
 	cx, cy := playerColl.Center()
@@ -46,5 +48,5 @@ func (e *EndoCamera) Update(diff, curr r.Vector2) {
 
 	// Reset the camera's target to the player's current position.
 	// Using a lerp to make the camera movement smoother.
-	e.Target = e.Target.Lerp(curr, 0.1)
+	e.Target = e.Target.Lerp(curr, e.LerpAmount)
 }
