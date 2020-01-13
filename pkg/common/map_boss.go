@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/SolarLune/dngn"
+	r "github.com/lachee/raylib-goplus/raylib"
 )
 
 type readyDirection struct {
@@ -140,11 +141,30 @@ func InsertBossOneRoom(sceneMap *dngn.Room, rooms []RoomSpec) (*dngn.Room, []Roo
 	newScene.DrawLine(upDir.x, upDir.y+12, upDir.x, 2, ' ', 2, false)
 	fmt.Println(newScene.DataToString())
 
+	newScene.Select().ByRune('}').By(func(x, y int) bool {
+		xO, yO = x, y
+		return true
+	})
+
+	// Insert the boss room and player spawn areas.
 	rooms = append(rooms, RoomSpec{
 		X:    upDir.x,
 		Y:    upDir.y,
-		Size: -1, // -1 indicates player spawn area.
+		Size: PlayerSpawn, // -1 indicates player spawn area.
+	}, RoomSpec{
+		X:    xO,
+		Y:    yO,
+		Size: BossSpawn, // -2 indicates boss spawn area.
 	})
+
+	// Ensure that the player can get from the spawn to the boss room.
+	if !validateMap(
+		newScene,
+		r.NewVector2(float32(upDir.x), float32(upDir.y+1)),
+		r.NewVector2(float32(xO), float32(yO)),
+	) {
+		return restart()
+	}
 
 	return newScene, rooms
 }

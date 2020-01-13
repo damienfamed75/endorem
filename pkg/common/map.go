@@ -29,8 +29,6 @@ func GenerateMap(bossroom int) (*dngn.Room, []RoomSpec) {
 	default:
 		return sceneMap, rooms
 	}
-
-	// return sceneMap, rooms
 }
 
 func findRooms(sceneMap *dngn.Room) []RoomSpec {
