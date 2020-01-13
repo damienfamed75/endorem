@@ -6,7 +6,6 @@ import (
 
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
-	"github.com/damienfamed75/endorem/pkg/testing"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -153,42 +152,44 @@ func (p *Player) movePlayer() r.Vector2 {
 	}
 
 	// COLLISION CHECK
-	// This currently does not handle left-right movement
-	if p.IsColliding(p.Ground) {
-		colShapes := p.GetCollidingShapes(p.Collision) // player
-		// colShapes := p.GetCollidingShapes(p.Ground) // player
-		for i := range *colShapes {
-			x, y := (*colShapes)[i].(testing.Collision).HandleCollision(p.Collision, p.Collision.H, &p.Speed)
-			p.Collision.X += x
-			p.Collision.Y += y
-		}
-	} else {
-		p.Collision.Y += 4
-	}
+	// TODO if time, use this if handleCollision in Plane is being used
+	// x, y := int32(p.Speed.X), int32(p.Speed.Y)
+	// if p.IsColliding(p.Ground) {
+	// 	//colShapes := p.GetCollidingShapes(p.Collision) // player
+	// 	// colShapes := p.GetCollidingShapes(p.Ground) // player
+	// 	colShapes := p.Ground.GetCollidingShapes(p)
+	// 	for i := range *colShapes {
+	// 		x, y = (*colShapes)[i].(testing.Collision).HandleCollision(p.Collision, p.Collision.H, p.Speed)
 
-	//ORIGINAL
-	// if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
-	// 	x = res.ResolveX
-	// 	p.SpeedX = 0
+	// 	}
 	// }
-
-	// res := p.Ground.Resolve(p.Collision, 0, y+4)
-
-	// if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
-	// 	res = resolv.Collision{}
-	// }
-	// if !res.Colliding() {
-	// 	res = p.Ground.Resolve(p.Collision, 0, y)
-	// }
-
-	// if res.Colliding() {
-	// 	y = res.ResolveY
-
-	// 	p.SpeedY = 0
-	// }
-
 	// p.Collision.X += x
 	// p.Collision.Y += y
+	//ORIGINAL
+	x := int32(p.Speed.X)
+	y := int32(p.Speed.Y)
+
+	// Check wall collision
+	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
+		x = res.ResolveX
+		p.Speed.X = 0
+	}
+
+	res := p.Ground.Resolve(p.Collision, 0, y+4)
+
+	if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
+		res = resolv.Collision{}
+	}
+	if !res.Colliding() {
+		res = p.Ground.Resolve(p.Collision, 0, y)
+	}
+
+	if res.Colliding() {
+		y = res.ResolveY
+		p.Speed.Y = 0
+	}
+	p.Collision.X += x
+	p.Collision.Y += y
 	// END COLLISION CHECK
 
 	return r.NewVector2(float32(0), float32(0))
