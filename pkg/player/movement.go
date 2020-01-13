@@ -28,6 +28,7 @@ type Player struct {
 	Ground   *resolv.Space
 	onGround bool
 
+	madeJump        bool
 	isAttacking     bool
 	isCrouched      bool
 	deathFunc       func()
@@ -134,18 +135,40 @@ func (p *Player) movePlayer() r.Vector2 {
 	}
 
 	// JUMPING
-	down := p.Ground.Resolve(p.Collision, 0, 4)
-	onGround := down.Colliding()
-
-	if r.IsKeyPressed(r.KeyW) && onGround {
-		p.SpeedY = -8
+	if !p.isCrouched {
+		p.playerJump()
 	}
 
 	x := int32(p.SpeedX)
 	y := int32(p.SpeedY)
 
+	// Crouching
+	// Changes to crouch sprite and hurtboxes
+
+	if r.IsKeyDown(r.KeyS) {
+		p.Collision.H = p.SpriteDuck.Height
+		p.Collision.W = p.SpriteDuck.Width
+		p.isCrouched = true
+		p.state = common.StateCrouch
+	} else {
+		p.Collision.H = p.SpriteStand.Height
+		p.Collision.W = p.SpriteStand.Width
+		p.isCrouched = false
+	}
+
+	x, y = p.checkCollision(x, y)
+	return r.NewVector2(float32(x), float32(y))
+}
+
+func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
 	// Check wall collision
-	//TODO this collision check can be posibly handled in the plane struct
+
+	// if r.IsKeyPressed(r.KeyS) {
+	// 	if res := p.Ground.Resolve(p.Collision, x, y+(p.SpriteStand.Height/2)); res.Colliding() {
+
+	// 		y = res.ResolveY
+	// 	}
+	// }
 	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
 		x = res.ResolveX
 		p.SpeedX = 0
@@ -162,27 +185,27 @@ func (p *Player) movePlayer() r.Vector2 {
 
 	if res.Colliding() {
 		y = res.ResolveY
+
 		p.SpeedY = 0
 	}
+
 	p.Collision.X += x
 	p.Collision.Y += y
 
-	// Crouching
-	// Changes to crouch sprite and hurtboxes
-	if r.IsKeyDown(r.KeyS) {
-
-		p.isCrouched = true
-		p.state = common.StateCrouch
-	} else {
-		p.isCrouched = false
-	}
-
-	if r.IsKeyReleased(r.KeyS) {
-		p.Collision.Y -= (p.SpriteStand.Height / 2)
-	}
-	return r.NewVector2(float32(x), float32(y))
+	return x, y
 }
+func (p *Player) playerJump() {
+	down := p.Ground.Resolve(p.Collision, 0, 4)
+	p.onGround = down.Colliding()
 
+	if r.IsKeyPressed(r.KeyW) && p.onGround {
+		p.SpeedY = -8
+		p.madeJump = true
+	} else if r.IsKeyPressed(r.KeyW) && p.madeJump {
+		p.SpeedY = -8
+		p.madeJump = false
+	}
+}
 func (p *Player) checkAttack() {
 	// If the last attack was performed too little of time ago then return.
 	if time.Since(p.attackBefore) <= time.Millisecond*p.attackTimer {
@@ -239,13 +262,8 @@ func (p *Player) Draw() {
 	x, y := p.Collision.GetXY()
 
 	if p.isCrouched {
-		p.Collision.H = p.SpriteDuck.Height
-		p.Collision.W = p.SpriteDuck.Width
 		r.DrawTexture(p.SpriteDuck, int(x), int(y), r.White)
 	} else {
-
-		p.Collision.H = p.SpriteStand.Height
-		p.Collision.W = p.SpriteStand.Width
 		r.DrawTexture(p.SpriteStand, int(x), int(y), r.White)
 	}
 	p.debugDraw()
