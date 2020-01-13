@@ -115,13 +115,13 @@ func InsertBossOneRoom(sceneMap *dngn.Room, rooms []RoomSpec) (*dngn.Room, []Roo
 	case "right":
 		newScene.CopyFrom(sceneMap, 0, 0)
 		newScene.Set(xO, yO, BossDoor)
-		newScene.Select().ByArea(sceneMap.Width, yO, roomWidth, roomHeight).Fill(Air)
+		newScene.Select().ByArea(sceneMap.Width, yO, roomWidth, roomHeight).Fill(NoEnemies)
 	// case "up":
 	// 	newScene.CopyFrom(sceneMap, 0, 100)
 	case "down":
 		newScene.CopyFrom(sceneMap, 0, 0)
 		newScene.Set(xO, yO, BossDoor)
-		newScene.Select().ByArea(xO, sceneMap.Height, roomWidth, roomHeight).Fill(Air)
+		newScene.Select().ByArea(xO, sceneMap.Height, roomWidth, roomHeight).Fill(NoEnemies)
 	}
 
 	// Ensure that the map doesn't have any missing floors, ceilings, or walls.
@@ -133,12 +133,13 @@ func InsertBossOneRoom(sceneMap *dngn.Room, rooms []RoomSpec) (*dngn.Room, []Roo
 
 	sceneMap = newScene
 
-	_ = upDir
+	// Add player spawn area.
 	newScene = dngn.NewRoom(sceneMap.Width, sceneMap.Height+10+1)
 	newScene.CopyFrom(sceneMap, 0, 10)
 
 	newScene.Select().ByArea(0, 0, sceneMap.Width, 10).Fill(Wall)
-	newScene.DrawLine(upDir.x, upDir.y+12, upDir.x, 2, Air, 2, false)
+	newScene.DrawLine(upDir.x, upDir.y+11, upDir.x, 2, NoEnemies, 2, false)
+	newScene.DrawLine(upDir.x-1, upDir.y+13, upDir.x+1, upDir.y+13, Wall, 1, false)
 	fmt.Println(newScene.DataToString())
 
 	newScene.Select().ByRune(BossDoor).By(func(x, y int) bool {
@@ -165,6 +166,10 @@ func InsertBossOneRoom(sceneMap *dngn.Room, rooms []RoomSpec) (*dngn.Room, []Roo
 	) {
 		return restart()
 	}
+
+	sprinkleInEnemies(newScene)
+
+	fmt.Println(newScene.DataToString())
 
 	return newScene, rooms
 }

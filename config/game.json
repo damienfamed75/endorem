@@ -24,6 +24,7 @@
         "attackTimer": 250,
         "invincibleTimer": 1000,
         "waitTime": 1000,
-        "visionDistance": 250
+		"visionDistance": 250,
+		"spawnDensity": 0.25
     }
 }
