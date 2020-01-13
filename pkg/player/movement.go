@@ -19,6 +19,7 @@ type Player struct {
 	Collision   *resolv.Rectangle
 	Hitbox      *resolv.Rectangle
 	Health      int
+	MaxHealth   int
 	IsDead      bool
 	Facing      common.Direction
 
@@ -36,12 +37,14 @@ type Player struct {
 	invincibleTimer time.Duration
 	state           common.State
 
+	*Inventory
 	*resolv.Space
 }
 
 func setupPlayer() *Player {
 	return &Player{
 		MaskObj:         NewMask(),
+		Inventory:       NewInventory(),
 		SpriteStand:     r.LoadTexture("assets/playerTest.png"),
 		SpriteDuck:      r.LoadTexture("assets/playerDuck.png"),
 		Space:           resolv.NewSpace(),

@@ -1,36 +1,37 @@
-package common
+package room
 
 import (
 	"fmt"
 
 	"github.com/SolarLune/dngn"
+	r "github.com/lachee/raylib-goplus/raylib"
 )
 
+// readyDirection stores the name of the direction that is ready for a boss room
+// or player spawn along with an x, y position for them to be placed.
 type readyDirection struct {
 	name string
 	x, y int
 }
 
-func IsMapReadyForPlacedThings(sceneMap *dngn.Room) ([]readyDirection, bool) {
-	// required := []string{"up"}
+// isRoomShapedRight checks to see if there is a valid spot to place a boss room
+// and a player spawn in the generated room. If there isn't then the function
+// returns false, which signifies that this room should be regenerated.
+func isRoomShapedRight(sceneMap *dngn.Room) ([]readyDirection, bool) {
 	var directions []readyDirection
 
 	selection := sceneMap.Select()
 
-	selection.ByRune('#').By(func(x, y int) bool {
-		// if direction != "" {
-		// 	return false
-		// }
-
+	selection.ByRune(Wall).By(func(x, y int) bool {
 		switch x {
 		// case 0: // Build left?
-		// if sceneMap.Get(x+1, y) == ' ' {
+		// if sceneMap.Get(x+1, y) == Air {
 		// 	direction = "left"
 		// }
 		case sceneMap.Width - 1:
 			fallthrough
 		case sceneMap.Width: // Build right?
-			if sceneMap.Get(x-1, y) == ' ' {
+			if sceneMap.Get(x-1, y) == Air {
 				directions = append(directions, readyDirection{"right", x, y})
 
 				rightWall := selection.ByArea(x, 0, 1, sceneMap.Height)
@@ -40,7 +41,7 @@ func IsMapReadyForPlacedThings(sceneMap *dngn.Room) ([]readyDirection, bool) {
 
 		switch y {
 		case 0: // Build up?
-			if sceneMap.Get(x, y+1) == ' ' {
+			if sceneMap.Get(x, y+1) == Air {
 				directions = append(directions, readyDirection{"up", x, y})
 
 				upperWall := selection.ByArea(0, 0, sceneMap.Width, 1)
@@ -49,7 +50,7 @@ func IsMapReadyForPlacedThings(sceneMap *dngn.Room) ([]readyDirection, bool) {
 		case sceneMap.Height - 1: // Build down?
 			fallthrough
 		case sceneMap.Height: // Build down?
-			if sceneMap.Get(x, y-1) == ' ' {
+			if sceneMap.Get(x, y-1) == Air {
 				directions = append(directions, readyDirection{"down", x, y})
 
 				bottWall := selection.ByArea(0, y, sceneMap.Width, 1)
@@ -80,7 +81,7 @@ func InsertBossOneRoom(sceneMap *dngn.Room, rooms []RoomSpec) (*dngn.Room, []Roo
 		upDir readyDirection
 	)
 
-	directions, ok := IsMapReadyForPlacedThings(sceneMap)
+	directions, ok := isRoomShapedRight(sceneMap)
 	if !ok {
 		return restart()
 	}
@@ -104,7 +105,7 @@ func InsertBossOneRoom(sceneMap *dngn.Room, rooms []RoomSpec) (*dngn.Room, []Roo
 	newScene = dngn.NewRoom(sceneMap.Width+roomWidth+1, sceneMap.Height+roomHeight+1)
 
 	oldLvlSelection := newScene.Select().ByArea(0, 0, sceneMap.Width, sceneMap.Height)
-	newScene.Select().RemoveSelection(oldLvlSelection).Fill('#')
+	newScene.Select().RemoveSelection(oldLvlSelection).Fill(Wall)
 
 	switch direction {
 	// case "left":
@@ -113,14 +114,14 @@ func InsertBossOneRoom(sceneMap *dngn.Room, rooms []RoomSpec) (*dngn.Room, []Roo
 	// fallthrough
 	case "right":
 		newScene.CopyFrom(sceneMap, 0, 0)
-		newScene.Set(xO, yO, '}')
-		newScene.Select().ByArea(sceneMap.Width, yO, roomWidth, roomHeight).Fill(' ')
+		newScene.Set(xO, yO, BossDoor)
+		newScene.Select().ByArea(sceneMap.Width, yO, roomWidth, roomHeight).Fill(Air)
 	// case "up":
 	// 	newScene.CopyFrom(sceneMap, 0, 100)
 	case "down":
 		newScene.CopyFrom(sceneMap, 0, 0)
-		newScene.Set(xO, yO, '}')
-		newScene.Select().ByArea(xO, sceneMap.Height, roomWidth, roomHeight).Fill(' ')
+		newScene.Set(xO, yO, BossDoor)
+		newScene.Select().ByArea(xO, sceneMap.Height, roomWidth, roomHeight).Fill(Air)
 	}
 
 	// Ensure that the map doesn't have any missing floors, ceilings, or walls.
@@ -136,21 +137,34 @@ func InsertBossOneRoom(sceneMap *dngn.Room, rooms []RoomSpec) (*dngn.Room, []Roo
 	newScene = dngn.NewRoom(sceneMap.Width, sceneMap.Height+10+1)
 	newScene.CopyFrom(sceneMap, 0, 10)
 
-	newScene.Select().ByArea(0, 0, sceneMap.Width, 10).Fill('#')
-	newScene.DrawLine(upDir.x, upDir.y+12, upDir.x, 2, ' ', 2, false)
+	newScene.Select().ByArea(0, 0, sceneMap.Width, 10).Fill(Wall)
+	newScene.DrawLine(upDir.x, upDir.y+12, upDir.x, 2, Air, 2, false)
 	fmt.Println(newScene.DataToString())
 
+	newScene.Select().ByRune(BossDoor).By(func(x, y int) bool {
+		xO, yO = x, y
+		return true
+	})
+
+	// Insert the boss room and player spawn areas.
 	rooms = append(rooms, RoomSpec{
 		X:    upDir.x,
 		Y:    upDir.y,
-		Size: -1, // -1 indicates player spawn area.
+		Size: PlayerSpawn, // -1 indicates player spawn area.
+	}, RoomSpec{
+		X:    xO,
+		Y:    yO,
+		Size: BossSpawn, // -2 indicates boss spawn area.
 	})
 
-	return newScene, rooms
-}
+	// Ensure that the player can get from the spawn to the boss room.
+	if !validateMap(
+		newScene,
+		r.NewVector2(float32(upDir.x), float32(upDir.y+1)),
+		r.NewVector2(float32(xO), float32(yO)),
+	) {
+		return restart()
+	}
 
-func restart() (*dngn.Room, []RoomSpec) {
-	newSceneMap := dngn.NewRoom(60, 30)
-	newRooms := newMap(newSceneMap)
-	return InsertBossOneRoom(newSceneMap, newRooms)
+	return newScene, rooms
 }

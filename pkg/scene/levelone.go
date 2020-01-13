@@ -1,10 +1,13 @@
 package scene
 
 import (
+	"fmt"
+
 	"github.com/SolarLune/dngn"
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
 	"github.com/damienfamed75/endorem/pkg/player"
+	"github.com/damienfamed75/endorem/pkg/room"
 	"github.com/damienfamed75/endorem/pkg/testing"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
@@ -15,7 +18,7 @@ var (
 
 type LevelOne struct {
 	mapData     *dngn.Room
-	rooms       []common.RoomSpec
+	rooms       []room.RoomSpec
 	player      *player.Player
 	ground      *resolv.Space
 	doors       *resolv.Space
@@ -34,10 +37,10 @@ func (l *LevelOne) Preload() {
 	l.ground = resolv.NewSpace()
 	l.doors = resolv.NewSpace()
 
-	l.mapData, l.rooms = common.GenerateMap(1)
+	l.mapData, l.rooms = room.GenerateMap(1)
 	mapScale := 34
 
-	var spawnRoom common.RoomSpec
+	var spawnRoom room.RoomSpec
 	for i := range l.rooms {
 		if l.rooms[i].Size == -1 {
 			spawnRoom = l.rooms[i]
@@ -50,9 +53,16 @@ func (l *LevelOne) Preload() {
 	l.player = player.NewPlayer(x, y, func() {}, l.ground)
 	l.camera = common.NewEndoCamera(l.player.Collision)
 
+	fmt.Printf("player inventory before [%v]\n", l.player.Inventory)
+
+	l.player.Inventory.AddItem(&testing.Item{})
+
+	// Show that the player has gotten an item that does nothing.
+	fmt.Printf("player inventory after [%v]\n", l.player.Inventory)
+
 	l.mapData.Select().By(func(x, y int) bool {
 		switch l.mapData.Get(x, y) {
-		case '#': // Wall
+		case room.Wall: // Wall
 			l.ground.Add(
 				testing.NewSolidPlane(
 					int32(x*mapScale), int32(y*mapScale),
@@ -60,15 +70,15 @@ func (l *LevelOne) Preload() {
 					r.Aqua,
 				),
 			)
-		case '-': // Door
+		case room.Door: // Door
 			l.doors.Add(
-				testing.NewPlane(
-					int32(x*mapScale), int32(y*mapScale),
-					int32(mapScale), int32(mapScale),
+				testing.NewDoor(
+					int32((x*mapScale)+(mapScale/2)), int32(y*mapScale),
+					int32((x*mapScale)+(mapScale/2)), int32((y*mapScale)+mapScale),
 					r.Orange,
 				),
 			)
-		case '^': // Hatches
+		case room.Hatch: // Hatches
 			l.doors.Add(
 				testing.NewPlane(
 					int32(x*mapScale), int32(y*mapScale),
@@ -76,7 +86,7 @@ func (l *LevelOne) Preload() {
 					r.Gold,
 				),
 			)
-		case '=': // Floating Platform 1
+		case room.FloatingPlatform1: // Floating Platform 1
 			l.ground.Add(
 				testing.NewSolidPlane(
 					int32(x*mapScale), int32(y*mapScale),
@@ -84,7 +94,7 @@ func (l *LevelOne) Preload() {
 					r.GopherBlue,
 				),
 			)
-		case '~': // Floating Platform 2
+		case room.FloatingPlatform2: // Floating Platform 2
 			l.ground.Add(
 				testing.NewSolidPlane(
 					int32(x*mapScale), int32(y*mapScale),
