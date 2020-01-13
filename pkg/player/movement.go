@@ -6,6 +6,7 @@ import (
 
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
+	"github.com/damienfamed75/endorem/pkg/testing"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -21,9 +22,7 @@ type Player struct {
 	IsDead      bool
 	Facing      common.Direction
 
-	SpeedX float32
-	SpeedY float32
-
+	Speed    r.Vector2
 	Ground   *resolv.Space
 	onGround bool
 
@@ -96,48 +95,45 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 func (p *Player) movePlayer() r.Vector2 {
 
 	// Left/Right Movement
-	p.SpeedY += 0.5
+	p.Speed.Y += 0.5
 
 	friction := float32(0.5)
 	accel := 0.5 + friction
 
 	maxSpd := float32(3)
 
-	if p.SpeedX > friction {
-		p.SpeedX -= friction
-	} else if p.SpeedX < -friction {
-		p.SpeedX += friction
+	if p.Speed.X > friction {
+		p.Speed.X -= friction
+	} else if p.Speed.X < -friction {
+		p.Speed.X += friction
 	} else {
-		p.SpeedX = 0
+		p.Speed.X = 0
 	}
 
 	// Controller Events
 	if r.IsKeyDown(r.KeyD) {
-		p.SpeedX += accel
+		p.Speed.X += accel
 		p.Facing = common.Right
 		p.state = common.StateRight
 	}
 	if r.IsKeyDown(r.KeyA) {
-		p.SpeedX -= accel
+		p.Speed.X -= accel
 		p.Facing = common.Left
 		p.state = common.StateLeft
 	}
 
 	// Speed Limit
-	if p.SpeedX > maxSpd {
-		p.SpeedX = maxSpd
+	if p.Speed.X > maxSpd {
+		p.Speed.X = maxSpd
 	}
-	if p.SpeedX < -maxSpd {
-		p.SpeedX = -maxSpd
+	if p.Speed.X < -maxSpd {
+		p.Speed.X = -maxSpd
 	}
 
 	// JUMPING
 	if !p.isCrouched {
 		p.playerJump()
 	}
-
-	x := int32(p.SpeedX)
-	y := int32(p.SpeedY)
 
 	// Crouching
 	// Changes to crouch sprite and hurtboxes
@@ -153,8 +149,45 @@ func (p *Player) movePlayer() r.Vector2 {
 		p.isCrouched = false
 	}
 
-	x, y = p.checkCollision(x, y)
-	return r.NewVector2(float32(x), float32(y))
+	// COLLISION CHECK
+	// This currently does not handle left-right movement
+	if p.IsColliding(p.Ground) {
+		colShapes := p.GetCollidingShapes(p.Ground)
+		for i := range *colShapes {
+			x, y := (*colShapes)[i].(testing.Collision).HandleCollision(p.Collision, p.Collision.H, &p.Speed)
+			p.Collision.X += x
+			p.Collision.Y += y
+		}
+	} else {
+		p.Collision.Y += 4
+	}
+
+	//ORIGINAL
+	// if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
+	// 	x = res.ResolveX
+	// 	p.SpeedX = 0
+	// }
+
+	// res := p.Ground.Resolve(p.Collision, 0, y+4)
+
+	// if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
+	// 	res = resolv.Collision{}
+	// }
+	// if !res.Colliding() {
+	// 	res = p.Ground.Resolve(p.Collision, 0, y)
+	// }
+
+	// if res.Colliding() {
+	// 	y = res.ResolveY
+
+	// 	p.SpeedY = 0
+	// }
+
+	// p.Collision.X += x
+	// p.Collision.Y += y
+	// END COLLISION CHECK
+
+	return r.NewVector2(float32(0), float32(0))
 }
 
 func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
@@ -166,28 +199,6 @@ func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
 	// 		y = res.ResolveY
 	// 	}
 	// }
-	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
-		x = res.ResolveX
-		p.SpeedX = 0
-	}
-
-	res := p.Ground.Resolve(p.Collision, 0, y+4)
-
-	if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
-		res = resolv.Collision{}
-	}
-	if !res.Colliding() {
-		res = p.Ground.Resolve(p.Collision, 0, y)
-	}
-
-	if res.Colliding() {
-		y = res.ResolveY
-
-		p.SpeedY = 0
-	}
-
-	p.Collision.X += x
-	p.Collision.Y += y
 
 	return x, y
 }
@@ -196,10 +207,10 @@ func (p *Player) playerJump() {
 	p.onGround = down.Colliding()
 
 	if r.IsKeyPressed(r.KeyW) && p.onGround {
-		p.SpeedY = -8
+		p.Speed.Y = -8
 		p.madeJump = true
 	} else if r.IsKeyPressed(r.KeyW) && p.madeJump {
-		p.SpeedY = -8
+		p.Speed.Y = -8
 		p.madeJump = false
 	}
 }
@@ -281,9 +292,9 @@ func (p *Player) TakeDamage() {
 }
 
 func (p *Player) debugDraw() {
-	if p.SpeedY < 0 {
+	if p.Speed.Y < 0 {
 		p.state = common.StateJumping
-	} else if p.SpeedY > 0 {
+	} else if p.Speed.Y > 0 {
 		p.state = common.StateFalling
 	}
 

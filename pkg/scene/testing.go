@@ -31,7 +31,6 @@ func (s *TestingScene) Preload() {
 	s.ground.Add(
 		testing.NewPlane(0, 500, 800, 100, r.Orange),
 	)
-
 	// Add enemies to the enemy space. Must be of common.Entity
 	s.enemies.Add(
 		enemy.NewBasic(100, 468),
