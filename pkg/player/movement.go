@@ -155,7 +155,8 @@ func (p *Player) movePlayer() r.Vector2 {
 	// COLLISION CHECK
 	// This currently does not handle left-right movement
 	if p.IsColliding(p.Ground) {
-		colShapes := p.GetCollidingShapes(p.Ground)
+		colShapes := p.GetCollidingShapes(p.Collision) // player
+		// colShapes := p.GetCollidingShapes(p.Ground) // player
 		for i := range *colShapes {
 			x, y := (*colShapes)[i].(testing.Collision).HandleCollision(p.Collision, p.Collision.H, &p.Speed)
 			p.Collision.X += x

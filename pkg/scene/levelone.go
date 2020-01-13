@@ -64,7 +64,12 @@ func (l *LevelOne) Preload() {
 		switch l.mapData.Get(x, y) {
 		case room.Wall: // Wall
 			l.ground.Add(
-				testing.NewSolidPlane(
+				// testing.NewSolidPlane(
+				// 	int32(x*mapScale), int32(y*mapScale),
+				// 	int32(mapScale), int32(mapScale),
+				// 	r.Aqua,
+				// ),
+				testing.NewPlane(
 					int32(x*mapScale), int32(y*mapScale),
 					int32(mapScale), int32(mapScale),
 					r.Aqua,
