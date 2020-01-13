@@ -6,7 +6,6 @@ import (
 
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
-	"github.com/damienfamed75/endorem/pkg/testing"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -23,7 +22,7 @@ type Player struct {
 	IsDead      bool
 	Facing      common.Direction
 
-	Speed    r.Vector2
+	Speed    *r.Vector2
 	Ground   *resolv.Space
 	onGround bool
 
@@ -63,6 +62,10 @@ func setupPlayer() *Player {
 func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	p := setupPlayer()
 	p.MaskObj.setMovePattern("test")
+	p.Speed = &r.Vector2{
+		X: 0,
+		Y: 0,
+	}
 	// Create Mask to follow player
 	// Set the death function that'll be called when the player dies.
 	p.deathFunc = deathFunc
@@ -95,7 +98,8 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 }
 
 // movePlayer handles key binded events involving the movement of the character
-func (p *Player) movePlayer() r.Vector2 {
+// removed r.Vector2 return
+func (p *Player) movePlayer() {
 
 	// Left/Right Movement
 	p.Speed.Y += 0.5
@@ -151,61 +155,9 @@ func (p *Player) movePlayer() r.Vector2 {
 		p.Collision.W = p.SpriteStand.Width
 		p.isCrouched = false
 	}
-
-	// COLLISION CHECK
-	// This currently does not handle left-right movement
-	if p.IsColliding(p.Ground) {
-		colShapes := p.GetCollidingShapes(p.Collision) // player
-		// colShapes := p.GetCollidingShapes(p.Ground) // player
-		for i := range *colShapes {
-			x, y := (*colShapes)[i].(testing.Collision).HandleCollision(p.Collision, p.Collision.H, &p.Speed)
-			p.Collision.X += x
-			p.Collision.Y += y
-		}
-	} else {
-		p.Collision.Y += 4
-	}
-
-	//ORIGINAL
-	// if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
-	// 	x = res.ResolveX
-	// 	p.SpeedX = 0
-	// }
-
-	// res := p.Ground.Resolve(p.Collision, 0, y+4)
-
-	// if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
-	// 	res = resolv.Collision{}
-	// }
-	// if !res.Colliding() {
-	// 	res = p.Ground.Resolve(p.Collision, 0, y)
-	// }
-
-	// if res.Colliding() {
-	// 	y = res.ResolveY
-
-	// 	p.SpeedY = 0
-	// }
-
-	// p.Collision.X += x
-	// p.Collision.Y += y
-	// END COLLISION CHECK
-
-	return r.NewVector2(float32(0), float32(0))
+	//log.Print("movePlayer: ", p.Speed.X, " ", p.Speed.Y)
 }
 
-func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
-	// Check wall collision
-
-	// if r.IsKeyPressed(r.KeyS) {
-	// 	if res := p.Ground.Resolve(p.Collision, x, y+(p.SpriteStand.Height/2)); res.Colliding() {
-
-	// 		y = res.ResolveY
-	// 	}
-	// }
-
-	return x, y
-}
 func (p *Player) playerJump() {
 	down := p.Ground.Resolve(p.Collision, 0, 4)
 	p.onGround = down.Colliding()
@@ -249,10 +201,12 @@ func (p *Player) attack() {
 	p.isAttacking = true
 }
 
-func (p *Player) Update() (r.Vector2, r.Vector2) {
+// Update player
+func (p *Player) Update() r.Vector2 {
 	p.state = common.StateIdle
 
-	diff := p.movePlayer()
+	//diff := p.movePlayer()
+	p.movePlayer()
 
 	maskTar := r.Vector2{
 		X: float32(p.Collision.X),
@@ -264,7 +218,7 @@ func (p *Player) Update() (r.Vector2, r.Vector2) {
 	p.checkAttack()
 	//p.checkInAir(ground)
 
-	return diff, r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
+	return r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
 }
 
 // Draw creates a rectangle using Raylib and draws the outline of it.

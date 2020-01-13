@@ -3,12 +3,14 @@ package testing
 import (
 	"log"
 
+	"github.com/damienfamed75/endorem/pkg/player"
+
 	"github.com/SolarLune/resolv/resolv"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
 type Collision interface {
-	HandleCollision(playerPos *resolv.Rectangle, playerHeight int32, speed *r.Vector2) (x, y int32)
+	HandleCollision(player *player.Player) (x, y int32)
 }
 
 // Plane is a surface for testing features for the game. It's very barebones and
@@ -57,28 +59,30 @@ func (p *Plane) Draw() {
 
 	r.DrawRectangleLinesEx(rec, 2, p.Color)
 }
-func (p *Plane) HandleCollision(playerPos *resolv.Rectangle, playerHeight int32, speed *r.Vector2) (x, y int32) {
-	playerX := int32(speed.X)
-	playerY := int32(speed.Y)
-	if res := p.Resolve(playerPos, playerX, 0); res.Colliding() {
+func (p *Plane) HandleCollision(player *player.Player) (x, y int32) {
+	playerX := int32(player.Speed.X)
+	playerY := int32(player.Speed.Y)
+
+	log.Print("before: ", playerX, " ", playerY)
+	if res := p.Resolve(player.Collision, playerX, 0); res.Colliding() {
 		playerX = res.ResolveX
-		speed.X = 0
+		player.Speed.X = 0
 	}
 
-	res := p.Resolve(playerPos, 0, playerY+4)
+	res := p.Resolve(player.Collision, 0, playerY+4)
 
-	if playerY < 0 || (res.Teleporting && res.ResolveY < -playerHeight/2) {
+	if playerY < 0 || (res.Teleporting && res.ResolveY < -player.Collision.H/2) {
 		res = resolv.Collision{}
 	}
 	if !res.Colliding() {
-		res = p.Resolve(playerPos, 0, playerY)
+		res = p.Resolve(player.Collision, 0, playerY)
 	}
 
 	if res.Colliding() {
 		playerY = res.ResolveY
-
-		speed.Y = 0
+		player.Speed.Y = 0
 	}
-	log.Print("collide")
+	log.Print("after: ", playerX, " ", playerY)
+	log.Print("after speed: ", player.Speed.X, " ", player.Speed.Y)
 	return playerX, playerY
 }

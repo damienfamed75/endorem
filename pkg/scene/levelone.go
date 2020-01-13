@@ -117,6 +117,19 @@ func (l *LevelOne) Preload() {
 
 func (l *LevelOne) Update(dt float32) {
 	l.camera.Update(l.player.Update())
+
+	x, y := int32(l.player.Speed.X), int32(l.player.Speed.Y)
+	if l.player.IsColliding(l.ground) {
+		//colShapes := l.player.GetCollidingShapes(l.player.Collision) // player
+		//colShapes := l.player.GetCollidingShapes(l.ground) // player
+		colShapes := l.ground.GetCollidingShapes(l.player)
+		for i := range *colShapes {
+			x, y = (*colShapes)[i].(testing.Collision).HandleCollision(l.player)
+
+		}
+	}
+	l.player.Collision.X += x
+	l.player.Collision.Y += y
 }
 
 func (l *LevelOne) Draw() {

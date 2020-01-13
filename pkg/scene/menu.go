@@ -62,6 +62,21 @@ func (s *MenuScene) Preload() {
 func (s *MenuScene) Update(dt float32) {
 	// s.camera.Update(s.player.Update())
 	s.player.Update()
+
+	// COLLISION CHECK
+	// This currently does not handle left-right movement
+	var x, y int32
+	if s.player.IsColliding(s.ground) {
+		colShapes := s.player.GetCollidingShapes(s.player.Collision) // player
+		// colShapes := p.GetCollidingShapes(p.Ground) // player
+		for i := range *colShapes {
+			x, y = (*colShapes)[i].(testing.Collision).HandleCollision(s.player)
+		}
+	} else {
+		s.player.Collision.Y += 4
+	}
+	s.player.Collision.X += x
+	s.player.Collision.Y += y
 	s.checkTransitions()
 }
 

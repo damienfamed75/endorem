@@ -32,7 +32,7 @@ func NewEndoCamera(playerColl *resolv.Rectangle) *EndoCamera {
 }
 
 // Update changes the offset position of the camera and the target.
-func (e *EndoCamera) Update(diff, curr r.Vector2) {
+func (e *EndoCamera) Update(curr r.Vector2) {
 	// Note: For Windows we don't need the camera offset to change.
 
 	// Update camera offset coordinates for it to move.
