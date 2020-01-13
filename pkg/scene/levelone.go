@@ -7,6 +7,7 @@ import (
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
 	"github.com/damienfamed75/endorem/pkg/player"
+	"github.com/damienfamed75/endorem/pkg/room"
 	"github.com/damienfamed75/endorem/pkg/testing"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
@@ -17,7 +18,7 @@ var (
 
 type LevelOne struct {
 	mapData     *dngn.Room
-	rooms       []common.RoomSpec
+	rooms       []room.RoomSpec
 	player      *player.Player
 	ground      *resolv.Space
 	doors       *resolv.Space
@@ -36,10 +37,10 @@ func (l *LevelOne) Preload() {
 	l.ground = resolv.NewSpace()
 	l.doors = resolv.NewSpace()
 
-	l.mapData, l.rooms = common.GenerateMap(1)
+	l.mapData, l.rooms = room.GenerateMap(1)
 	mapScale := 34
 
-	var spawnRoom common.RoomSpec
+	var spawnRoom room.RoomSpec
 	for i := range l.rooms {
 		if l.rooms[i].Size == -1 {
 			spawnRoom = l.rooms[i]

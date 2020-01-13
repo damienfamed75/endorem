@@ -1,4 +1,4 @@
-package common
+package room
 
 import (
 	"github.com/SolarLune/dngn"
@@ -15,11 +15,11 @@ func validateMap(sceneMap *dngn.Room, start, end r.Vector2) bool {
 	grid := paths.NewGridFromRuneArrays(sceneMap.Data)
 
 	// Set the walls as non-walkable areas.
-	for _, cell := range grid.GetCellsByRune('#') {
+	for _, cell := range grid.GetCellsByRune(Wall) {
 		cell.Walkable = false
 	}
 
-	for _, cell := range grid.GetCellsByRune(' ') {
+	for _, cell := range grid.GetCellsByRune(Air) {
 		cell.Cost = 1
 	}
 
@@ -30,4 +30,10 @@ func validateMap(sceneMap *dngn.Room, start, end r.Vector2) bool {
 	)
 
 	return path.Valid()
+}
+
+func restart() (*dngn.Room, []RoomSpec) {
+	newSceneMap := dngn.NewRoom(60, 30)
+	newRooms := newMap(newSceneMap)
+	return InsertBossOneRoom(newSceneMap, newRooms)
 }
