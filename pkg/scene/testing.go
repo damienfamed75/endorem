@@ -32,13 +32,13 @@ func (s *TestingScene) Preload() {
 		testing.NewPlane(0, 500, 800, 100, r.Orange),
 	)
 
-	// Add enemies to the enemy space. Must be of common.Entity
-	s.enemies.Add(
-		enemy.NewBasic(100, 468),
-	)
-
 	s.player = player.NewPlayer(0, 468, func() {}, s.ground)
 	s.camera = common.NewEndoCamera(s.player.Collision)
+
+	// Add enemies to the enemy space. Must be of common.Entity
+	s.enemies.Add(
+		enemy.NewBasic(100, 468, s.player.Collision),
+	)
 
 	// Add everything to the world space.
 	s.world.Add(s.ground, s.enemies, s.player)

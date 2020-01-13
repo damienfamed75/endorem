@@ -9,7 +9,10 @@ import (
 // Update is non drawing related functionality with the enemy.
 func (b *Basic) Update(float32) {
 	b.move()
-	b.attack()
+
+	if b.ShouldAttack {
+		b.attack()
+	}
 }
 
 func (b *Basic) attack() {
@@ -47,8 +50,19 @@ func (b *Basic) move() {
 	if !b.PlayerSeen {
 		b.idleWalk()
 	} else {
-		// TODO - chase player (day 2)
+		// Since the enemy can see the player, they should be facing the player.
+		// This should be removed once movement is added.
+		if b.playerPosition.X < b.Collision.X {
+			b.Facing = common.Left
+		} else {
+			b.Facing = common.Right
+		}
+
 	}
+}
+
+func (b *Basic) chasePlayer() {
+
 }
 
 func (b *Basic) idleWalk() {
@@ -95,4 +109,8 @@ func (b *Basic) idleWalk() {
 	x := int32(b.SpeedX)
 
 	b.Collision.Move(x, 0)
+}
+
+func (b *Basic) tryToMove(x int) {
+
 }

@@ -40,6 +40,7 @@ type Basic struct {
 	invincibleTimer    time.Duration
 	destinationMetTime time.Time
 	waitTime           time.Duration
+	playerPosition     *resolv.Rectangle
 
 	*resolv.Space
 }
@@ -64,9 +65,11 @@ func setupBasic() *Basic {
 }
 
 // NewBasic returns a configured basic enemy at the given coordinates.
-func NewBasic(x, y int) *Basic {
+func NewBasic(x, y int, playerPosition *resolv.Rectangle) *Basic {
 	b := setupBasic()
 
+	// store the player's position so then the enemy can chase them.
+	b.playerPosition = playerPosition
 	b.Origin = r.NewVector2(float32(x), float32(y))
 	b.Destinations = [2]r.Vector2{
 		r.NewVector2(
