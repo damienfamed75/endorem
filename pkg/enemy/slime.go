@@ -1,6 +1,7 @@
 package enemy
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -20,7 +21,9 @@ type Slime struct {
 	ground *resolv.Space
 
 	onGround         bool
+	attacking        bool
 	travelSpeed      float32
+	attackSpeed      float32
 	attackDistance   int32
 	speedY           float32
 	speedX           float32
@@ -48,9 +51,10 @@ func setupSlime() *Slime {
 		gravity:          common.GlobalConfig.Game.Gravity,
 		jumpTimer:        1000,
 		travelSpeed:      1,
-		maxSpeedX:        6,
+		attackSpeed:      4,
+		maxSpeedX:        8,
 		maxSpeedY:        6,
-		attackJumpHeight: -8,
+		attackJumpHeight: -4,
 		travelJumpHeight: -4,
 		jumpTimeBegin:    time.Now(),
 		invincibleTimer:  time.Duration(common.GlobalConfig.Enemy.InvincibleTimer),
@@ -107,6 +111,10 @@ func (s *Slime) Update(float32) {
 
 	s.playerSeen = dist < common.GlobalConfig.Enemy.VisionDistance
 
+	if s.attacking {
+		s.attacking = !s.OnGround()
+	}
+
 	if s.playerSeen {
 		// if the slime sees the player and is in attacking distance
 		// then jump at the player.
@@ -126,17 +134,22 @@ func (s *Slime) Update(float32) {
 }
 
 func (s *Slime) attack() {
-	// TODO add attacking jump at player.
-	s.Rigidbody.Velocity.X = 0
+	// Try to make a small jump.
+	s.jump(s.attackJumpHeight)
+
+	if !s.OnGround() && !s.attacking {
+		s.attacking = true
+		s.Rigidbody.Velocity.X = s.attackSpeed * s.getPlayerDirection()
+	}
 }
 
 func (s *Slime) followPlayer() {
 	// Try to make a small jump.
 	s.jump(s.travelJumpHeight)
 
-	if !s.OnGround() {
+	if !s.OnGround() && !s.attacking {
 		s.Rigidbody.Velocity.X = s.travelSpeed * s.getPlayerDirection()
-	} else {
+	} else if !s.attacking {
 		s.Rigidbody.Velocity.X = 0
 	}
 }
@@ -184,6 +197,18 @@ func (s *Slime) debugDraw() {
 	r.DrawText(
 		"HP: "+strconv.Itoa(s.Health),
 		int(s.GetX()), int(s.GetY()-(s.Sprite.Width/2)), 10,
+		r.White,
+	)
+
+	r.DrawText(
+		fmt.Sprintf("G[%v]", s.OnGround()),
+		int(s.GetX()), int(s.GetY()+(s.Sprite.Height)), 10,
+		r.White,
+	)
+
+	r.DrawText(
+		fmt.Sprintf("V[%v,%v]", s.Velocity.X, s.Velocity.Y),
+		int(s.GetX()), int(s.GetY()+(s.Sprite.Height)+10), 10,
 		r.White,
 	)
 
