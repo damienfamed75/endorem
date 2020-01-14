@@ -1,6 +1,7 @@
 package enemy
 
 import (
+	"log"
 	"time"
 
 	"github.com/damienfamed75/endorem/pkg/common"
@@ -16,6 +17,7 @@ var (
 // Basic is a testing enemy that is very basic in attacks and features.
 type Basic struct {
 	Health          int
+	current         r.Vector2
 	SpeedX          float32
 	SpeedY          float32
 	IsDead          bool
@@ -41,6 +43,7 @@ type Basic struct {
 	destinationMetTime time.Time
 	waitTime           time.Duration
 
+	MoveIncrement float64
 	*resolv.Space
 }
 
@@ -87,7 +90,9 @@ func NewBasic(x, y int) *Basic {
 	b.Hitbox = resolv.NewRectangle(
 		0, 0, b.Sprite.Height, b.Sprite.Width,
 	)
-
+	log.Print(b.Collision.GetXY())
+	b.current = r.NewVector2(float32(x), float32(y))
+	log.Print(b.current)
 	// Add the collision boxes to the enemy space.
 	b.Add(b.Collision, b.Hitbox)
 	b.SetData(b)

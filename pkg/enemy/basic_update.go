@@ -1,6 +1,7 @@
 package enemy
 
 import (
+	"math"
 	"time"
 
 	"github.com/damienfamed75/endorem/pkg/common"
@@ -43,56 +44,29 @@ func (b *Basic) attack() {
 }
 
 func (b *Basic) move() {
-	// idle walking.
+	// // idle walking.
 	if !b.PlayerSeen {
-		b.idleWalk()
+		// if met destination on X, turn around
+
 	} else {
 		// TODO - chase player (day 2)
 	}
+	b.walk()
+	// for i, d := range b.Destinations {
+	// 	if b.current.X == d.X && b.LastDestination != i {
+	// 		//log.Print("change direction")
+	// 		b.direction *= -1
+	// 		b.LastDestination = i
+	// 		b.destinationMetTime = time.Now() // Reset wait timer.
+	// 	} else {
+	// 		target = d
+	// 	}
+	// }
+
 }
 
-func (b *Basic) idleWalk() {
-	// Wait for the enemy to sit for a bit at their destination.
-	if time.Since(b.destinationMetTime) <= time.Millisecond*b.waitTime {
-		return
-	}
-
-	friction := float32(0.5)
-	accel := (0.5 + friction) * float32(b.direction)
-
-	maxSpd := float32(1)
-	if b.SpeedX > friction {
-		b.SpeedX -= friction
-	} else if b.SpeedX < -friction {
-		b.SpeedX += friction
-	} else {
-		b.SpeedX = 0
-	}
-
-	// if met destination on X, turn around
-	for i, d := range b.Destinations {
-		if b.Collision.X == int32(d.X) && b.LastDestination != i {
-			b.direction *= -1
-			b.LastDestination = i
-			b.destinationMetTime = time.Now() // Reset wait timer.
-		}
-	}
-	b.SpeedX += accel
-
-	if b.SpeedX > maxSpd {
-		b.SpeedX = maxSpd
-	}
-	if b.SpeedX < -maxSpd {
-		b.SpeedX = -maxSpd
-	}
-
-	if b.direction > 0 {
-		b.Facing = common.Right
-	} else {
-		b.Facing = common.Left
-	}
-
-	x := int32(b.SpeedX)
-
-	b.Collision.Move(x, 0)
+func (b *Basic) walk() {
+	b.MoveIncrement += 0.01
+	center := ((b.Destinations[1].X - b.Destinations[0].X) / 2)
+	b.Collision.X = int32(float64(center) + (math.Sin(b.MoveIncrement*math.Pi) * float64(center)))
 }
