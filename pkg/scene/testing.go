@@ -51,7 +51,7 @@ func (s *TestingScene) Update(dt float32) {
 
 	// Update all the enemies.
 	for i := range *s.enemies {
-		(*s.enemies)[i].(common.Entity).Update(dt)
+		(*s.enemies)[i].(common.Entity).Update(dt, s.player.Collision)
 	}
 
 	// Loop through all the enemies and detect collisions with the player.

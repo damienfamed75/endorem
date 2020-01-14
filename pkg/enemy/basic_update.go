@@ -4,12 +4,13 @@ import (
 	"math"
 	"time"
 
+	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
 )
 
 // Update is non drawing related functionality with the enemy.
-func (b *Basic) Update(float32) {
-	b.move()
+func (b *Basic) Update(dt float32, player *resolv.Rectangle) {
+	b.move(player)
 	b.attack()
 }
 
@@ -43,15 +44,16 @@ func (b *Basic) attack() {
 	}
 }
 
-func (b *Basic) move() {
+func (b *Basic) move(player *resolv.Rectangle) {
 	// // idle walking.
 	if !b.PlayerSeen {
 		// if met destination on X, turn around
-
+		b.idleWalk()
 	} else {
 		// TODO - chase player (day 2)
+		b.chasePlayer(player)
 	}
-	b.walk()
+	// b.idleWalk()
 	// for i, d := range b.Destinations {
 	// 	if b.current.X == d.X && b.LastDestination != i {
 	// 		//log.Print("change direction")
@@ -65,8 +67,24 @@ func (b *Basic) move() {
 
 }
 
-func (b *Basic) walk() {
+func (b *Basic) idleWalk() {
 	b.MoveIncrement += 0.01
 	center := ((b.Destinations[1].X - b.Destinations[0].X) / 2)
 	b.Collision.X = int32(float64(center) + (math.Sin(b.MoveIncrement*math.Pi) * float64(center)))
+}
+
+func (b *Basic) chasePlayer(player *resolv.Rectangle) {
+	// Change direction based on player position
+	if b.Collision.X < player.X {
+		b.direction = 1
+	} else {
+		b.direction = -1
+	}
+
+	// Move x-position towards player
+	// TODO stop movement if in attack range
+	b.Collision.X += int32(b.SpeedX * float32(b.direction))
+
+	// TODO Jump is obstacle is in enemy way
+
 }

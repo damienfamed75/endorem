@@ -1,7 +1,6 @@
 package enemy
 
 import (
-	"log"
 	"time"
 
 	"github.com/damienfamed75/endorem/pkg/common"
@@ -17,8 +16,7 @@ var (
 // Basic is a testing enemy that is very basic in attacks and features.
 type Basic struct {
 	Health          int
-	current         r.Vector2
-	SpeedX          float32
+	SpeedX          float32 // speed of basic in X-direction
 	SpeedY          float32
 	IsDead          bool
 	PlayerSeen      bool // If the enemy has spotted the enemy.
@@ -52,6 +50,7 @@ func setupBasic() *Basic {
 		Sprite:             r.LoadTexture("assets/basicenemy.png"),
 		Space:              resolv.NewSpace(),
 		Health:             2 + common.GlobalConfig.Enemy.AddedHealth,
+		SpeedX:             2,
 		AttackDistance:     30,
 		direction:          1,
 		Facing:             common.Right,
@@ -90,9 +89,7 @@ func NewBasic(x, y int) *Basic {
 	b.Hitbox = resolv.NewRectangle(
 		0, 0, b.Sprite.Height, b.Sprite.Width,
 	)
-	log.Print(b.Collision.GetXY())
-	b.current = r.NewVector2(float32(x), float32(y))
-	log.Print(b.current)
+
 	// Add the collision boxes to the enemy space.
 	b.Add(b.Collision, b.Hitbox)
 	b.SetData(b)
