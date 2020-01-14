@@ -35,6 +35,7 @@ type Slime struct {
 	attackJumpHeight float32
 	maxSpeedX        int32
 	maxSpeedY        int32
+	targetAnimation  string
 
 	playerSeen    bool
 	jumpTimeBegin time.Time
@@ -100,21 +101,47 @@ func NewSlime(x, y int, world *resolv.Space) *Slime {
 }
 
 func (s *Slime) TakeDamage() {
-	if time.Since(s.healthBefore) >= time.Millisecond*s.invincibleTimer {
+	if time.Since(s.healthBefore) >= time.Millisecond*s.invincibleTimer && !s.IsDead {
 		s.healthBefore = time.Now()
 
 		s.Health--
+		// s.Rigidbody.Velocity.X = -(s.travelSpeed * s.getPlayerDirection())
+		// s.Rigidbody.Velocity.Y = -s.travelSpeed
+		// s.attacking = true
+		// TODO push slime back from the player and play hurt animation.
+		// s.playPriorityAnimation("damage")
+
 		if s.Health <= 0 {
 			s.IsDead = true
-			s.Clear()
 		}
 	}
+}
+
+func (s *Slime) playPriorityAnimation(anim string) {
+	s.Ase.Play(anim)
+	s.targetAnimation = anim
+}
+
+func (s *Slime) playingTargetAnimation() bool {
+	if s.Ase.IsPlaying(s.targetAnimation) {
+		return s.Ase.AnimationFinished()
+	}
+
+	return false
 }
 
 // Update gets called every frame and tells if the slime is going to
 // sit still, idle travel around, jump to the player, or attack.
 func (s *Slime) Update(dt float32) {
 	s.Ase.Update(dt)
+
+	if s.IsDead {
+		if s.waitAndPlay("death") {
+			s.Clear()
+		}
+
+		return
+	}
 
 	px, py := s.player.GetXY()
 
@@ -140,7 +167,10 @@ func (s *Slime) Update(dt float32) {
 			s.followPlayer()
 		}
 	} else {
-		s.Ase.Play("idle")
+		if !s.playingTargetAnimation() {
+			s.Ase.Play("idle")
+		}
+
 		s.Rigidbody.Velocity.X = 0
 	}
 
@@ -163,6 +193,7 @@ func (s *Slime) followPlayer() {
 	s.jump(s.travelJumpHeight)
 
 	if !s.OnGround() && !s.attacking {
+		s.attacking = true
 		s.Rigidbody.Velocity.X = s.travelSpeed * s.getPlayerDirection()
 	} else if !s.attacking {
 		s.Rigidbody.Velocity.X = 0
@@ -180,10 +211,14 @@ func (s *Slime) getPlayerDirection() float32 {
 }
 
 // jump is the slime's main form of movement.
-func (s *Slime) jump(height float32) bool {
+func (s *Slime) jump(height float32) {
 	// If the slime is on the ground and has waited long enough to jump
 	// again then perform a jump.
 	if s.OnGround() && time.Since(s.jumpTimeBegin) > time.Millisecond*s.jumpTimer {
+		if s.playingTargetAnimation() {
+			return
+		}
+
 		if s.waitAndPlay("jump") {
 			// Reset jump timer.
 			s.jumpTimeBegin = time.Now()
@@ -194,10 +229,10 @@ func (s *Slime) jump(height float32) bool {
 			s.onGround = false
 		}
 	} else if s.OnGround() {
-		s.Ase.Play("idle")
+		if !s.playingTargetAnimation() {
+			s.Ase.Play("idle")
+		}
 	}
-
-	return !s.onGround
 }
 
 // waitAndPlay queues an animation to be played and
