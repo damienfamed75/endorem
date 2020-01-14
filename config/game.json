@@ -9,7 +9,8 @@
             "defaultSpeed": 0.1
         },
         "volume": 100,
-        "defaultScene": "testing scene"
+		"defaultScene": "testing scene",
+		"gravity": 0.5
     },
     "player": {
         "addedHealth": 0,

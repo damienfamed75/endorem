@@ -30,18 +30,29 @@ func (s *TestingScene) Preload() {
 	// Add all ground to the ground space.
 	s.ground.Add(
 		testing.NewPlane(0, 500, 800, 100, r.Orange),
+		testing.NewPlane(200, 400, 80, 70, r.DarkGreen),
 	)
+	s.ground.AddTags(common.TagGround)
+
+	// Add the ground elements to the world space.
+	s.world.Add(s.ground)
 
 	s.player = player.NewPlayer(0, 468, func() {}, s.ground)
+	s.player.AddTags(common.TagPlayer)
+
 	s.camera = common.NewEndoCamera(s.player.Collision)
+
+	// Add the player to the world space.
+	s.world.Add(s.player)
 
 	// Add enemies to the enemy space. Must be of common.Entity
 	s.enemies.Add(
 		enemy.NewBasic(100, 468, s.player.Collision),
+		enemy.NewSlime(300, 400, s.world),
 	)
 
-	// Add everything to the world space.
-	s.world.Add(s.ground, s.enemies, s.player)
+	// Add enemies to the world space.
+	s.world.Add(s.enemies)
 }
 
 // Update frames
@@ -64,6 +75,14 @@ func (s *TestingScene) Update(dt float32) {
 		// If it's a string, then it's a Hitbox.
 		// If it's a reference to itself then it's a Hurtbox.
 		switch t := en.GetData().(type) {
+		case *enemy.Slime: // Hurtbox
+			// If the hurtbox is colliding a player hitbox then take damage.
+			if t.FilterByTags(enemy.TagHurtbox).IsColliding(s.player.Hitbox) {
+				t.TakeDamage()
+				// If the player is colliding with the enemy then they should take damage.
+			} else if s.player.FilterByTags(player.TagHurtbox).IsColliding(t.FilterOutByTags(enemy.TagAttackZone)) {
+				s.player.TakeDamage()
+			}
 		case *enemy.Basic: // Hurtbox
 			enX, enY := t.Collision.Center()
 			pX, pY := s.player.Collision.Center()
