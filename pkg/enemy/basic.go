@@ -20,8 +20,10 @@ type Basic struct {
 	Health int
 	IsDead bool
 
-	SpeedX float32 // speed of basic in X-direction
-	SpeedY float32
+	SpeedX      int32 // speed of basic in X-direction
+	SpeedY      int32
+	gravity     float32
+	travelSpeed float32
 
 	player *resolv.Space
 	Ground *resolv.Space
@@ -35,8 +37,8 @@ type Basic struct {
 	Destinations    [2]r.Vector2 // left and right destinations
 	LastDestination int
 
-	Collision *resolv.Rectangle
-	Hitbox    *resolv.Rectangle
+	//Collision *resolv.Rectangle
+	Hitbox *resolv.Rectangle
 
 	direction          int8
 	state              common.State
@@ -50,16 +52,17 @@ type Basic struct {
 	waitTime           time.Duration
 
 	MoveIncrement float64
-	*resolv.Space
+	*common.Rigidbody
 }
 
 func setupBasic() *Basic {
 	return &Basic{
 		Sprite:             r.LoadTexture("assets/basicenemy.png"),
-		Space:              resolv.NewSpace(),
 		Health:             2 + common.GlobalConfig.Enemy.AddedHealth,
+		gravity:            common.GlobalConfig.Game.Gravity,
 		SpeedX:             2,
 		SpeedY:             2,
+		travelSpeed:        1,
 		AttackDistance:     30,
 		direction:          1,
 		jumpHeight:         8,
@@ -97,21 +100,26 @@ func NewBasic(x, y int, world *resolv.Space) *Basic {
 	}
 
 	// Set the hit and hurt boxes.
-	b.Collision = resolv.NewRectangle(
+	collision := resolv.NewRectangle(
 		int32(x), int32(y),
 		b.Sprite.Width, b.Sprite.Height,
 	)
 	b.Hitbox = resolv.NewRectangle(
 		0, 0, b.Sprite.Height, b.Sprite.Width,
 	)
+	b.Rigidbody = common.NewRigidbody(
+		int32(x), int32(y),
+		b.SpeedX, b.SpeedY, b.Ground,
+		collision,
+	)
 
 	// Add the collision boxes to the enemy space.
-	b.Add(b.Collision, b.Hitbox)
-	b.SetData(b)
+	// b.Add(b.Collision, b.Hitbox)
+	// b.SetData(b)
 
-	// Set the hitbox data to be different from the hitbox data.
-	b.Collision.AddTags(TagHurtbox)
-	b.Hitbox.SetData(HitboxData)
+	// // Set the hitbox data to be different from the hitbox data.
+	// b.Collision.AddTags(TagHurtbox)
+	// b.Hitbox.SetData(HitboxData)
 
 	// Tag this enemy as an enemy.
 	b.AddTags(common.TagEnemy)
@@ -123,7 +131,7 @@ func NewBasic(x, y int, world *resolv.Space) *Basic {
 // Draw is used for raylib exclusive drawing function calls.
 func (b *Basic) Draw() {
 	// Draw the enemy texture.
-	r.DrawTexture(b.Sprite, int(b.Collision.X), int(b.Collision.Y), r.White)
+	r.DrawTexture(b.Sprite, int(b.GetX()), int(b.GetY()), r.White)
 
 	b.debugDraw() //DEBUG
 }

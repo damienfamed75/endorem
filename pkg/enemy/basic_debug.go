@@ -11,37 +11,37 @@ func (b *Basic) debugDraw() {
 	// Draw health.
 	r.DrawText(
 		"HP: "+strconv.Itoa(b.Health),
-		int(b.Collision.X), int(b.Collision.Y-(b.Collision.W/2)), 10,
+		int(b.GetX()), int(b.GetY()-(b.Sprite.Width/2)), 10,
 		r.White,
 	)
 	// Draw state.
 	r.DrawText(
 		b.state.String(),
-		int(b.Collision.X), int(b.Collision.Y+b.Collision.H), 10,
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height), 10,
 		r.White,
 	)
 	// Draw facing direction.
 	r.DrawText(
 		b.Facing.String(),
-		int(b.Collision.X), int(b.Collision.Y+b.Collision.H+10), 10,
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height+10), 10,
 		r.White,
 	)
 	r.DrawText(
 		fmt.Sprintf("PSen: %v Atk: %v", b.PlayerSeen, b.ShouldAttack),
-		int(b.Collision.X), int(b.Collision.Y+b.Collision.H+20), 10,
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height+20), 10,
 		r.White,
 	)
 
 	// Draw the collision box for debugging reasons.
 	r.DrawRectangleLines(
-		int(b.Collision.X), int(b.Collision.Y),
-		int(b.Collision.W), int(b.Collision.H),
+		int(b.GetX()), int(b.GetY()),
+		int(b.GetX()), int(b.Sprite.Height),
 		r.Red,
 	)
 
 	enemyCenterBottom := r.NewVector2(
-		float32(b.Collision.X)+float32(b.Collision.W/2),
-		float32(b.Collision.Y+b.Collision.H),
+		float32(b.GetX())+float32(b.Sprite.Width/2),
+		float32(b.GetY()+b.Sprite.Height),
 	)
 
 	r.DrawLineEx(

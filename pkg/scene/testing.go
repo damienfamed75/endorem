@@ -31,7 +31,7 @@ func (s *TestingScene) Preload() {
 	s.ground.Add(
 		testing.NewPlane(0, 500, 800, 100, r.Orange),
 		testing.NewPlane(500, 450, 50, 50, r.Green),
-		testing.NewPlane(200, 400, 80, 70, r.DarkGreen),
+		testing.NewPlane(200, 450, 50, 50, r.DarkGreen),
 	)
 	s.ground.AddTags(common.TagGround)
 
@@ -85,14 +85,14 @@ func (s *TestingScene) Update(dt float32) {
 				s.player.TakeDamage()
 			}
 		case *enemy.Basic: // Hurtbox
-			enX, enY := t.Collision.Center()
-			pX, pY := s.player.Collision.Center()
+			//enX, enY := t.Collision.Center()
+			// pX, pY := s.player.Collision.Center()
 
 			// Calculate the distance from the enemy to the player.
-			dist := resolv.Distance(enX, enY, pX, pY)
+			//dist := resolv.Distance(enX, enY, pX, pY)
 
-			t.PlayerSeen = dist < common.GlobalConfig.Enemy.VisionDistance
-			t.ShouldAttack = dist < t.AttackDistance
+			//t.PlayerSeen = dist < common.GlobalConfig.Enemy.VisionDistance
+			// t.ShouldAttack = dist < t.AttackDistance
 
 			// If the hurtbox is colliding a player hitbox then take damage.
 			if t.FilterByTags(enemy.TagHurtbox).IsColliding(s.player.Hitbox) {

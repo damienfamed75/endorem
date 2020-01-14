@@ -1,7 +1,6 @@
 package enemy
 
 import (
-	"math"
 	"time"
 
 	"github.com/damienfamed75/endorem/pkg/common"
@@ -14,6 +13,7 @@ func (b *Basic) Update(float32) {
 	if b.ShouldAttack {
 		b.attack()
 	}
+	b.Rigidbody.Update()
 }
 
 func (b *Basic) attack() {
@@ -31,11 +31,12 @@ func (b *Basic) attack() {
 			// b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
 			// Based on the direction the player is facing, set the position of the
 			// hitbox in front of the player.
-			if b.Facing == common.Left {
-				b.Hitbox.SetXY(b.Collision.X-(b.Hitbox.W/2), b.Collision.Y+b.Collision.H/3.0)
-			} else {
-				b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
-			}
+
+			// if b.Facing == common.Left {
+			// 	b.Hitbox.SetXY(b.Collision.X-(b.Hitbox.W/2), b.Collision.Y+b.Collision.H/3.0)
+			// } else {
+			// 	b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
+			// }
 
 			b.Add(b.Hitbox)
 		} else {
@@ -48,13 +49,15 @@ func (b *Basic) attack() {
 
 func (b *Basic) move() {
 	// // idle walking.
-	if !b.PlayerSeen {
-		// if met destination on X, turn around
-		b.idleWalk()
-	} else {
-		// TODO - chase player (day 2)
-		b.chasePlayer()
-	}
+	b.chasePlayer()
+	//TODO fix
+	// if !b.PlayerSeen {
+	// 	// if met destination on X, turn around
+	// 	b.idleWalk()
+	// } else {
+	// 	// TODO - chase player (day 2)
+
+	// }
 	// b.idleWalk()
 	// for i, d := range b.Destinations {
 	// 	if b.current.X == d.X && b.LastDestination != i {
@@ -71,15 +74,15 @@ func (b *Basic) move() {
 
 func (b *Basic) idleWalk() {
 	// MoveIncrement not only changes the position, but influences time
-	b.MoveIncrement += 0.01
-	center := ((b.Destinations[1].X - b.Destinations[0].X) / 2)
-	b.Collision.X = int32(float64(center) + (math.Sin(b.MoveIncrement*math.Pi) * float64(center)))
+	// b.MoveIncrement += 0.01
+	// center := ((b.Destinations[1].X - b.Destinations[0].X) / 2)
+	// b.Collision.X = int32(float64(center) + (math.Sin(b.MoveIncrement*math.Pi) * float64(center)))
 }
 
 func (b *Basic) chasePlayer() {
 	// Change direction based on player position
 	px, _ := b.player.GetXY()
-	if b.Collision.X < px {
+	if b.GetX() < px {
 		b.direction = 1
 	} else {
 		b.direction = -1
@@ -87,7 +90,7 @@ func (b *Basic) chasePlayer() {
 
 	// Move x-position towards player
 	// TODO stop movement if in attack range
-	b.Collision.X += int32(b.SpeedX * float32(b.direction))
+	b.Rigidbody.Velocity.X = b.travelSpeed * b.getPlayerDirection()
 
 	// TODO Jump is obstacle is in enemy way
 	// res := b.Resolve(b.Ground, int32(b.SpeedX), 0)
@@ -96,8 +99,16 @@ func (b *Basic) chasePlayer() {
 	// if res.Teleporting {
 	// 	b.Collision.Y -= b.jumpHeight
 	// }
-}
 
+}
+func (b *Basic) getPlayerDirection() float32 {
+	px, _ := b.player.GetXY()
+	if px > b.GetX() {
+		return 1
+	}
+
+	return -1
+}
 func (b *Basic) tryToMove(x int) {
 
 }
