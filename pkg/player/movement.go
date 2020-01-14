@@ -23,13 +23,15 @@ type Player struct {
 	IsDead      bool
 	Facing      common.Direction
 
-	SpeedX float32
-	SpeedY float32
+	maxSpeedX  int32
+	maxSpeedY  int32
+	SpeedX     float32
+	SpeedY     float32
+	jumpHeight float32
+	madeJump   bool
 
-	Ground   *resolv.Space
-	onGround bool
+	Ground *resolv.Space
 
-	madeJump        bool
 	isAttacking     bool
 	isCrouched      bool
 	deathFunc       func()
@@ -40,18 +42,23 @@ type Player struct {
 	state           common.State
 
 	*Inventory
-	*resolv.Space
+	//*resolv.Space
+	*common.Rigidbody
 }
 
 func setupPlayer() *Player {
 	return &Player{
-		MaskObj:         NewMask(),
-		Inventory:       NewInventory(),
-		SpriteStand:     r.LoadTexture("assets/playerTest.png"),
-		SpriteDuck:      r.LoadTexture("assets/playerDuck.png"),
-		Space:           resolv.NewSpace(),
+		MaskObj:     NewMask(),
+		Inventory:   NewInventory(),
+		SpriteStand: r.LoadTexture("assets/playerTest.png"),
+		SpriteDuck:  r.LoadTexture("assets/playerDuck.png"),
+		//Space:           resolv.NewSpace(),
 		Facing:          common.Right,
 		Health:          3,
+		maxSpeedX:       2,
+		maxSpeedY:       6,
+		jumpHeight:      -6,
+		madeJump:        false,
 		healthBefore:    time.Now(),
 		attackBefore:    time.Now(),
 		attackTimer:     time.Duration(common.GlobalConfig.Player.AttackTimer),
@@ -64,6 +71,7 @@ func setupPlayer() *Player {
 // the collision space for the player
 func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	p := setupPlayer()
+	p.Ground = ground
 	p.MaskObj.setMovePattern("test")
 	// Create Mask to follow player
 	// Set the death function that'll be called when the player dies.
@@ -74,11 +82,16 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 		int32(x), int32(y),
 		p.SpriteStand.Width, p.SpriteStand.Height,
 	)
-
+	p.Collision.AddTags(common.TagCollision)
 	p.Hitbox = resolv.NewRectangle(
 		0, 0, p.SpriteStand.Height, p.SpriteStand.Width,
 	)
 
+	p.Rigidbody = common.NewRigidbody(
+		int32(x), int32(y),
+		p.maxSpeedX, p.maxSpeedY, p.Ground,
+		p.Collision,
+	)
 	// Set all spaces to have self referencial data.
 	p.SetData(p)
 	p.AddTags(common.TagPlayer)
@@ -92,48 +105,45 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 
 	// Saves the ground
 	// for collision detection with player
-	p.Ground = ground
 
 	return p
 }
 
 // movePlayer handles key binded events involving the movement of the character
-func (p *Player) movePlayer() r.Vector2 {
+func (p *Player) movePlayer() {
 
 	// Left/Right Movement
-	p.SpeedY += 0.5
 
 	friction := float32(0.5)
-	accel := 0.5 + friction
+	// accel := 0.5 + friction
 
-	maxSpd := float32(3)
-
-	if p.SpeedX > friction {
-		p.SpeedX -= friction
-	} else if p.SpeedX < -friction {
-		p.SpeedX += friction
+	// Slows down player movement after key is released
+	if p.Rigidbody.Velocity.X > friction {
+		p.Rigidbody.Velocity.X -= friction
+	} else if p.Rigidbody.Velocity.X < -friction {
+		p.Rigidbody.Velocity.X += friction
 	} else {
-		p.SpeedX = 0
+		p.Rigidbody.Velocity.X = 0
 	}
 
 	// Controller Events
 	if r.IsKeyDown(r.KeyD) {
-		p.SpeedX += accel
+		p.Rigidbody.Velocity.X += float32(p.maxSpeedX)
 		p.Facing = common.Right
 		p.state = common.StateRight
 	}
 	if r.IsKeyDown(r.KeyA) {
-		p.SpeedX -= accel
+		p.Rigidbody.Velocity.X -= float32(p.maxSpeedX)
 		p.Facing = common.Left
 		p.state = common.StateLeft
 	}
 
-	// Speed Limit
-	if p.SpeedX > maxSpd {
-		p.SpeedX = maxSpd
+	//Speed Limit
+	if p.Velocity.X > float32(p.maxSpeedX) {
+		p.Velocity.X = float32(p.maxSpeedX)
 	}
-	if p.SpeedX < -maxSpd {
-		p.SpeedX = -maxSpd
+	if p.Velocity.X < -float32(p.maxSpeedX) {
+		p.Velocity.X = -float32(p.maxSpeedX)
 	}
 
 	// JUMPING
@@ -141,71 +151,65 @@ func (p *Player) movePlayer() r.Vector2 {
 		p.playerJump()
 	}
 
-	x := int32(p.SpeedX)
-	y := int32(p.SpeedY)
-
 	// Crouching
 	// Changes to crouch sprite and hurtboxes
 
-	if r.IsKeyDown(r.KeyS) {
-		p.Collision.H = p.SpriteDuck.Height
-		p.Collision.W = p.SpriteDuck.Width
-		p.isCrouched = true
-		p.state = common.StateCrouch
-	} else {
-		p.Collision.H = p.SpriteStand.Height
-		p.Collision.W = p.SpriteStand.Width
-		p.isCrouched = false
-	}
-
-	x, y = p.checkCollision(x, y)
-	return r.NewVector2(float32(x), float32(y))
-}
-
-func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
-	// Check wall collision
-
-	// if r.IsKeyPressed(r.KeyS) {
-	// 	if res := p.Ground.Resolve(p.Collision, x, y+(p.SpriteStand.Height/2)); res.Colliding() {
-
-	// 		y = res.ResolveY
-	// 	}
+	// if r.IsKeyDown(r.KeyS) {
+	// 	p.Collision.H = p.SpriteDuck.Height
+	// 	p.Collision.W = p.SpriteDuck.Width
+	// 	p.isCrouched = true
+	// 	p.state = common.StateCrouch
+	// } else {
+	// 	p.Collision.H = p.SpriteStand.Height
+	// 	p.Collision.W = p.SpriteStand.Width
+	// 	p.isCrouched = false
 	// }
-	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
-		x = res.ResolveX
-		p.SpeedX = 0
-	}
 
-	res := p.Ground.Resolve(p.Collision, 0, y+4)
-
-	if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
-		res = resolv.Collision{}
-	}
-	if !res.Colliding() {
-		res = p.Ground.Resolve(p.Collision, 0, y)
-	}
-
-	if res.Colliding() {
-		y = res.ResolveY
-
-		p.SpeedY = 0
-	}
-
-	p.Move(x, y)
-	// p.Collision.X += x
-	// p.Collision.Y += y
-
-	return x, y
+	// return r.NewVector2(float32(x), float32(y))
 }
-func (p *Player) playerJump() {
-	down := p.Ground.Resolve(p.Collision, 0, 4)
-	p.onGround = down.Colliding()
 
-	if r.IsKeyPressed(r.KeyW) && p.onGround {
-		p.SpeedY = -8
+// func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
+// 	// Check wall collision
+
+// 	// if r.IsKeyPressed(r.KeyS) {
+// 	// 	if res := p.Ground.Resolve(p.Collision, x, y+(p.SpriteStand.Height/2)); res.Colliding() {
+
+// 	// 		y = res.ResolveY
+// 	// 	}
+// 	// }
+// 	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
+// 		x = res.ResolveX
+// 		p.SpeedX = 0
+// 	}
+
+// 	res := p.Ground.Resolve(p.Collision, 0, y+4)
+
+// 	if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
+// 		res = resolv.Collision{}
+// 	}
+// 	if !res.Colliding() {
+// 		res = p.Ground.Resolve(p.Collision, 0, y)
+// 	}
+
+// 	if res.Colliding() {
+// 		y = res.ResolveY
+
+// 		p.SpeedY = 0
+// 	}
+
+// 	p.Move(x, y)
+// 	// p.Collision.X += x
+// 	// p.Collision.Y += y
+
+// 	return x, y
+// }
+func (p *Player) playerJump() {
+
+	if r.IsKeyPressed(r.KeyW) && p.OnGround() {
+		p.Rigidbody.Velocity.Y = p.jumpHeight
 		p.madeJump = true
 	} else if r.IsKeyPressed(r.KeyW) && p.madeJump {
-		p.SpeedY = -8
+		p.Rigidbody.Velocity.Y = p.jumpHeight
 		p.madeJump = false
 	}
 }
@@ -240,10 +244,10 @@ func (p *Player) attack() {
 	p.isAttacking = true
 }
 
-func (p *Player) Update() (r.Vector2, r.Vector2) {
+func (p *Player) Update() r.Vector2 {
 	p.state = common.StateIdle
 
-	diff := p.movePlayer()
+	p.movePlayer()
 
 	maskTar := r.Vector2{
 		X: float32(p.Collision.X),
@@ -253,21 +257,19 @@ func (p *Player) Update() (r.Vector2, r.Vector2) {
 	p.MaskObj.Update()
 
 	p.checkAttack()
-	//p.checkInAir(ground)
 
-	return diff, r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
+	p.Rigidbody.Update()
+	return r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
 }
 
 // Draw creates a rectangle using Raylib and draws the outline of it.
 func (p *Player) Draw() {
 	p.MaskObj.Draw()
-	//p.Collision.SetXY()
-	x, y := p.GetXY()
 
 	if p.isCrouched {
-		r.DrawTexture(p.SpriteDuck, int(x), int(y), r.White)
+		r.DrawTexture(p.SpriteDuck, int(p.GetX()), int(p.GetY()), r.White)
 	} else {
-		r.DrawTexture(p.SpriteStand, int(x), int(y), r.White)
+		r.DrawTexture(p.SpriteStand, int(p.GetX()), int(p.GetY()), r.White)
 	}
 	p.debugDraw()
 }
@@ -321,8 +323,8 @@ func (p *Player) debugDraw() {
 	)
 
 	r.DrawRectangleLines(
-		int(p.Collision.X), int(p.Collision.Y),
-		int(p.Collision.W), int(p.Collision.H),
+		int(p.GetX()), int(p.GetY()),
+		int(p.SpriteStand.Width), int(p.SpriteStand.Height),
 		r.Red,
 	)
 	if p.isAttacking {

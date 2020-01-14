@@ -70,6 +70,16 @@ func (r *Rigidbody) Update() {
 	if !r.onGround {
 		r.Velocity.Y += r.gravity
 	}
+	// max speed checks
+	if r.Velocity.X > float32(r.maxSpeedX) {
+		r.Velocity.X = float32(r.maxSpeedX)
+	}
+	if r.Velocity.X < -float32(r.maxSpeedX) {
+		r.Velocity.X = -float32(r.maxSpeedX)
+	}
+	if r.Velocity.Y > float32(r.maxSpeedY) {
+		r.Velocity.Y = float32(r.maxSpeedY)
+	}
 
 	// Ground check
 	down := r.ground.Resolve(r.collisions, 0, r.maxSpeedY)
@@ -89,7 +99,7 @@ func (r *Rigidbody) Update() {
 	// Y
 	if res := r.ground.Resolve(r.collisions, 0, y); res.Colliding() {
 		y = res.ResolveY
-		r.Velocity.X = 0
+		r.Velocity.Y = 0
 	}
 
 	r.Space.Move(0, y)
