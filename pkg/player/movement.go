@@ -127,6 +127,7 @@ func (p *Player) movePlayer() {
 	}
 
 	// Controller Events
+	// TODO For simplicity in testing the velocity is the maxSpeed of X
 	if r.IsKeyDown(r.KeyD) {
 		p.Rigidbody.Velocity.X += float32(p.maxSpeedX)
 		p.Facing = common.Right
@@ -138,15 +139,8 @@ func (p *Player) movePlayer() {
 		p.state = common.StateLeft
 	}
 
-	//Speed Limit
-	if p.Velocity.X > float32(p.maxSpeedX) {
-		p.Velocity.X = float32(p.maxSpeedX)
-	}
-	if p.Velocity.X < -float32(p.maxSpeedX) {
-		p.Velocity.X = -float32(p.maxSpeedX)
-	}
-
 	// JUMPING
+	// if the player isn't crouched allow for jump events
 	if !p.isCrouched {
 		p.playerJump()
 	}
@@ -204,7 +198,6 @@ func (p *Player) movePlayer() {
 // 	return x, y
 // }
 func (p *Player) playerJump() {
-
 	if r.IsKeyPressed(r.KeyW) && p.OnGround() {
 		p.Rigidbody.Velocity.Y = p.jumpHeight
 		p.madeJump = true
@@ -244,14 +237,15 @@ func (p *Player) attack() {
 	p.isAttacking = true
 }
 
+// Update player
 func (p *Player) Update() r.Vector2 {
 	p.state = common.StateIdle
 
 	p.movePlayer()
 
 	maskTar := r.Vector2{
-		X: float32(p.Collision.X),
-		Y: float32(p.Collision.Y),
+		X: float32(p.GetX()),
+		Y: float32(p.GetY()),
 	}
 	p.MaskObj.checkDirection(maskTar, p.Facing)
 	p.MaskObj.Update()
