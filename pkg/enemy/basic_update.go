@@ -4,14 +4,16 @@ import (
 	"math"
 	"time"
 
-	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
 )
 
 // Update is non drawing related functionality with the enemy.
-func (b *Basic) Update(dt float32, player *resolv.Rectangle) {
-	b.move(player)
-	b.attack()
+func (b *Basic) Update(float32) {
+	b.move()
+
+	if b.ShouldAttack {
+		b.attack()
+	}
 }
 
 func (b *Basic) attack() {
@@ -44,14 +46,14 @@ func (b *Basic) attack() {
 	}
 }
 
-func (b *Basic) move(player *resolv.Rectangle) {
+func (b *Basic) move() {
 	// // idle walking.
 	if !b.PlayerSeen {
 		// if met destination on X, turn around
 		b.idleWalk()
 	} else {
 		// TODO - chase player (day 2)
-		b.chasePlayer(player)
+		b.chasePlayer()
 	}
 	// b.idleWalk()
 	// for i, d := range b.Destinations {
@@ -74,9 +76,10 @@ func (b *Basic) idleWalk() {
 	b.Collision.X = int32(float64(center) + (math.Sin(b.MoveIncrement*math.Pi) * float64(center)))
 }
 
-func (b *Basic) chasePlayer(player *resolv.Rectangle) {
+func (b *Basic) chasePlayer() {
 	// Change direction based on player position
-	if b.Collision.X < player.X {
+	px, _ := b.player.GetXY()
+	if b.Collision.X < px {
 		b.direction = 1
 	} else {
 		b.direction = -1
@@ -93,4 +96,8 @@ func (b *Basic) chasePlayer(player *resolv.Rectangle) {
 	// if res.Teleporting {
 	// 	b.Collision.Y -= b.jumpHeight
 	// }
+}
+
+func (b *Basic) tryToMove(x int) {
+
 }

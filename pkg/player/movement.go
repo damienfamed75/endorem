@@ -1,6 +1,7 @@
 package player
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -80,6 +81,7 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 
 	// Set all spaces to have self referencial data.
 	p.SetData(p)
+	p.AddTags(common.TagPlayer)
 	// Set the hurtbox to store differing data.
 	p.Collision.SetData(HurtboxData)
 	p.Collision.AddTags(TagHurtbox)
@@ -189,8 +191,9 @@ func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
 		p.SpeedY = 0
 	}
 
-	p.Collision.X += x
-	p.Collision.Y += y
+	p.Move(x, y)
+	// p.Collision.X += x
+	// p.Collision.Y += y
 
 	return x, y
 }
@@ -259,7 +262,7 @@ func (p *Player) Update() (r.Vector2, r.Vector2) {
 func (p *Player) Draw() {
 	p.MaskObj.Draw()
 	//p.Collision.SetXY()
-	x, y := p.Collision.GetXY()
+	x, y := p.GetXY()
 
 	if p.isCrouched {
 		r.DrawTexture(p.SpriteDuck, int(x), int(y), r.White)
@@ -296,6 +299,15 @@ func (p *Player) debugDraw() {
 		int(p.Collision.X), int(p.Collision.Y-(p.Collision.W/2)), 10,
 		r.White,
 	)
+
+	px, py := p.GetXY()
+
+	r.DrawText(
+		fmt.Sprintf("P[%v,%v]", px, py),
+		int(p.Collision.X), int(p.Collision.Y+(p.Collision.H)+20), 10,
+		r.White,
+	)
+
 	// Draw state.
 	r.DrawText(
 		p.state.String(),

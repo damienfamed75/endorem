@@ -8,4 +8,6 @@ const (
 	BossDoor          = '}'
 	FloatingPlatform1 = '~'
 	FloatingPlatform2 = '='
+	NoEnemies         = '`'
+	Enemy             = ';'
 )

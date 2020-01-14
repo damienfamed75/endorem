@@ -15,10 +15,17 @@ var (
 
 // Basic is a testing enemy that is very basic in attacks and features.
 type Basic struct {
-	Health          int
-	SpeedX          float32 // speed of basic in X-direction
-	SpeedY          float32
-	IsDead          bool
+	Sprite r.Texture2D
+
+	Health int
+	IsDead bool
+
+	SpeedX float32 // speed of basic in X-direction
+	SpeedY float32
+
+	player *resolv.Space
+	Ground *resolv.Space
+
 	PlayerSeen      bool // If the enemy has spotted the enemy.
 	ShouldAttack    bool
 	AttackDistance  int32
@@ -27,10 +34,9 @@ type Basic struct {
 	Origin          r.Vector2
 	Destinations    [2]r.Vector2 // left and right destinations
 	LastDestination int
-	Sprite          r.Texture2D
-	Collision       *resolv.Rectangle
-	Hitbox          *resolv.Rectangle
-	Ground          *resolv.Space
+
+	Collision *resolv.Rectangle
+	Hitbox    *resolv.Rectangle
 
 	direction          int8
 	state              common.State
@@ -70,8 +76,13 @@ func setupBasic() *Basic {
 }
 
 // NewBasic returns a configured basic enemy at the given coordinates.
-func NewBasic(x, y int, ground *resolv.Space) *Basic {
+func NewBasic(x, y int, world *resolv.Space) *Basic {
+
 	b := setupBasic()
+
+	// store the player's position so then the enemy can chase them.
+	b.player = world.FilterByTags(common.TagPlayer)
+	b.Ground = world.FilterByTags(common.TagGround)
 
 	b.Origin = r.NewVector2(float32(x), float32(y))
 	b.Destinations = [2]r.Vector2{
@@ -93,7 +104,6 @@ func NewBasic(x, y int, ground *resolv.Space) *Basic {
 	b.Hitbox = resolv.NewRectangle(
 		0, 0, b.Sprite.Height, b.Sprite.Width,
 	)
-	b.Ground = ground
 
 	// Add the collision boxes to the enemy space.
 	b.Add(b.Collision, b.Hitbox)
