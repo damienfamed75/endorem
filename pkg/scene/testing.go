@@ -85,15 +85,6 @@ func (s *TestingScene) Update(dt float32) {
 				s.player.TakeDamage()
 			}
 		case *enemy.Basic: // Hurtbox
-			//enX, enY := t.Collision.Center()
-			// pX, pY := s.player.Collision.Center()
-
-			// Calculate the distance from the enemy to the player.
-			//dist := resolv.Distance(enX, enY, pX, pY)
-
-			//t.PlayerSeen = dist < common.GlobalConfig.Enemy.VisionDistance
-			// t.ShouldAttack = dist < t.AttackDistance
-
 			// If the hurtbox is colliding a player hitbox then take damage.
 			if t.FilterByTags(enemy.TagHurtbox).IsColliding(s.player.Hitbox) {
 				t.TakeDamage()

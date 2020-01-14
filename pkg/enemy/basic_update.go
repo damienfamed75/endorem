@@ -3,16 +3,31 @@ package enemy
 import (
 	"time"
 
+	"github.com/SolarLune/resolv/resolv"
+
 	"github.com/damienfamed75/endorem/pkg/common"
 )
 
 // Update is non drawing related functionality with the enemy.
 func (b *Basic) Update(float32) {
+	px, py := b.player.GetXY()
+
+	dist := resolv.Distance(
+		b.GetX(), b.GetY(),
+		px, py,
+	)
+
+	b.PlayerSeen = dist < common.GlobalConfig.Enemy.VisionDistance
+	b.ShouldAttack = dist < b.AttackDistance
+
 	b.move()
 
 	if b.ShouldAttack {
 		b.attack()
+	} else if !b.Hitbox.HasTags(TagAttackZone) {
+		b.Hitbox.AddTags(TagAttackZone)
 	}
+
 	b.Rigidbody.Update()
 }
 
@@ -28,37 +43,39 @@ func (b *Basic) attack() {
 		b.isAttacking = !b.isAttacking
 		if b.isAttacking {
 			// Re-add hurtbox to the enemy space and set position to enemy.
-			// b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
+			//b.Hitbox.SetXY(b.GetX(), b.GetY()+b.Sprite.Height/3.0)
 			// Based on the direction the player is facing, set the position of the
 			// hitbox in front of the player.
 
 			// if b.Facing == common.Left {
-			// 	b.Hitbox.SetXY(b.Collision.X-(b.Hitbox.W/2), b.Collision.Y+b.Collision.H/3.0)
+			// 	b.Hitbox.SetXY(b.GetX()-(b.Hitbox.W/2), b.GetY()+b.Sprite.Height/3.0)
 			// } else {
-			// 	b.Hitbox.SetXY(b.Collision.X, b.Collision.Y+b.Collision.H/3.0)
+			// 	b.Hitbox.SetXY(b.GetX(), b.GetY()+b.Sprite.Height/3.0)
 			// }
 
-			b.Add(b.Hitbox)
+			b.Hitbox.SetXY(b.GetX()+(b.Hitbox.W/2*int32(b.getPlayerDirection()))-(b.Sprite.Width/2), b.Hitbox.Y)
+			b.Hitbox.ClearTags()
+			//	b.Add(b.Hitbox)
 		} else {
 			// Remove hurtbox from enemy space.
-			b.Remove(b.Hitbox)
-			b.state = common.StateIdle
+			//b.Remove(b.Hitbox)
+			b.Hitbox.AddTags(TagAttackZone)
+			//b.state = common.StateIdle
 		}
 	}
 }
 
 func (b *Basic) move() {
 	// // idle walking.
-	b.chasePlayer()
-	//TODO fix
-	// if !b.PlayerSeen {
-	// 	// if met destination on X, turn around
-	// 	b.idleWalk()
-	// } else {
-	// 	// TODO - chase player (day 2)
 
-	// }
-	// b.idleWalk()
+	if !b.PlayerSeen {
+		// if met destination on X, turn around
+		b.idleWalk()
+	} else {
+		// TODO - chase player (day 2)
+		b.chasePlayer()
+	}
+
 	// for i, d := range b.Destinations {
 	// 	if b.current.X == d.X && b.LastDestination != i {
 	// 		//log.Print("change direction")
@@ -80,14 +97,6 @@ func (b *Basic) idleWalk() {
 }
 
 func (b *Basic) chasePlayer() {
-	// Change direction based on player position
-	px, _ := b.player.GetXY()
-	if b.GetX() < px {
-		b.direction = 1
-	} else {
-		b.direction = -1
-	}
-
 	// Move x-position towards player
 	// TODO stop movement if in attack range
 	b.Rigidbody.Velocity.X = b.travelSpeed * b.getPlayerDirection()

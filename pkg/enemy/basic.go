@@ -20,13 +20,17 @@ type Basic struct {
 	Health int
 	IsDead bool
 
-	SpeedX      int32 // speed of basic in X-direction
-	SpeedY      int32
+	SpeedX    int32 // speed of basic in X-direction
+	SpeedY    int32
+	maxSpeedX int32
+	maxSpeedY int32
+
 	gravity     float32
 	travelSpeed float32
 
-	player *resolv.Space
-	Ground *resolv.Space
+	player    *resolv.Space
+	Ground    *resolv.Space
+	Collision *resolv.Rectangle
 
 	PlayerSeen      bool // If the enemy has spotted the enemy.
 	ShouldAttack    bool
@@ -60,8 +64,8 @@ func setupBasic() *Basic {
 		Sprite:             r.LoadTexture("assets/basicenemy.png"),
 		Health:             2 + common.GlobalConfig.Enemy.AddedHealth,
 		gravity:            common.GlobalConfig.Game.Gravity,
-		SpeedX:             2,
-		SpeedY:             2,
+		maxSpeedX:          6,
+		maxSpeedY:          4,
 		travelSpeed:        1,
 		AttackDistance:     30,
 		direction:          1,
@@ -100,26 +104,31 @@ func NewBasic(x, y int, world *resolv.Space) *Basic {
 	}
 
 	// Set the hit and hurt boxes.
-	collision := resolv.NewRectangle(
-		int32(x), int32(y),
+	b.Collision = resolv.NewRectangle(
+		// int32(x), int32(y),
+		0, 0,
 		b.Sprite.Width, b.Sprite.Height,
 	)
+	b.Collision.AddTags(common.TagCollision)
+
 	b.Hitbox = resolv.NewRectangle(
-		0, 0, b.Sprite.Height, b.Sprite.Width,
+		0, b.Sprite.Height/3, b.Sprite.Height, b.Sprite.Width,
 	)
+
 	b.Rigidbody = common.NewRigidbody(
 		int32(x), int32(y),
-		b.SpeedX, b.SpeedY, b.Ground,
-		collision,
+		b.maxSpeedX, b.maxSpeedY, b.Ground,
+		b.Collision, b.Hitbox,
 	)
 
 	// Add the collision boxes to the enemy space.
-	// b.Add(b.Collision, b.Hitbox)
-	// b.SetData(b)
+	// COLLISION WAS REMOVED FROM THIS ADD WHEN RIGIDBODY WAS IMPLEMENTED
+	//b.Add(b.Hitbox)
+	b.SetData(b)
 
 	// // Set the hitbox data to be different from the hitbox data.
-	// b.Collision.AddTags(TagHurtbox)
-	// b.Hitbox.SetData(HitboxData)
+	b.AddTags(TagHurtbox)
+	b.Hitbox.SetData(HitboxData)
 
 	// Tag this enemy as an enemy.
 	b.AddTags(common.TagEnemy)

@@ -31,11 +31,20 @@ func (b *Basic) debugDraw() {
 		int(b.GetX()), int(b.GetY()+b.Sprite.Height+20), 10,
 		r.White,
 	)
-
+	r.DrawText(
+		fmt.Sprintf("hit: [%v, %v] Col: [%v , %v]", b.Hitbox.X, b.Hitbox.Y, b.Collision.X, b.Collision.Y),
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height+30), 10,
+		r.White,
+	)
+	r.DrawText(
+		fmt.Sprintf("space: [%v, %v]", b.Rigidbody.GetX(), b.Rigidbody.GetY()),
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height+40), 10,
+		r.White,
+	)
 	// Draw the collision box for debugging reasons.
 	r.DrawRectangleLines(
 		int(b.GetX()), int(b.GetY()),
-		int(b.GetX()), int(b.Sprite.Height),
+		int(b.Sprite.Width), int(b.Sprite.Height),
 		r.Red,
 	)
 
@@ -56,11 +65,20 @@ func (b *Basic) debugDraw() {
 	)
 
 	// If the enemy is attacking then draw the debug collision box.
-	if b.isAttacking {
+	// if b.isAttacking {
+	if !b.Hitbox.HasTags(TagAttackZone) {
+		r.DrawRectangleLines(
+			int(b.Hitbox.X), int(b.Hitbox.Y),
+			int(b.Hitbox.W), int(b.Hitbox.H),
+			r.Red,
+		)
+	} else {
 		r.DrawRectangleLines(
 			int(b.Hitbox.X), int(b.Hitbox.Y),
 			int(b.Hitbox.W), int(b.Hitbox.H),
 			r.Green,
 		)
 	}
+
+	// }
 }

@@ -15,9 +15,10 @@ import (
 )
 
 type Rigidbody struct {
-	onGround bool
-	ground   *resolv.Space
-	gravity  float32
+	onGround   bool
+	ground     *resolv.Space
+	collisions *resolv.Space
+	gravity    float32
 
 	Velocity  r.Vector2
 	maxSpeedX int32
@@ -37,6 +38,7 @@ func NewRigidbody(x, y, maxSpeedX, maxSpeedY int32, ground *resolv.Space, collid
 	r := setupRigidbody()
 
 	r.Add(colliders...)
+	r.collisions = r.FilterByTags(TagCollision)
 	r.SetXY(x, y)
 	r.maxSpeedX, r.maxSpeedY = maxSpeedX, maxSpeedY
 
@@ -70,14 +72,14 @@ func (r *Rigidbody) Update() {
 	}
 
 	// Ground check
-	down := r.ground.Resolve(r, 0, r.maxSpeedY)
+	down := r.ground.Resolve(r.collisions, 0, r.maxSpeedY)
 	r.onGround = down.Colliding()
 
 	// Misc.
 	x, y := int32(r.Velocity.X), int32(r.Velocity.Y)
 
 	// X
-	if res := r.ground.Resolve(r, x, 0); res.Colliding() {
+	if res := r.ground.Resolve(r.collisions, x, 0); res.Colliding() {
 		x = res.ResolveX
 		r.Velocity.X = 0
 	}
@@ -85,7 +87,7 @@ func (r *Rigidbody) Update() {
 	r.Space.Move(x, 0)
 
 	// Y
-	if res := r.ground.Resolve(r, 0, y); res.Colliding() {
+	if res := r.ground.Resolve(r.collisions, 0, y); res.Colliding() {
 		y = res.ResolveY
 		r.Velocity.X = 0
 	}
