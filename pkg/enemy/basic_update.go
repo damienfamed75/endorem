@@ -68,6 +68,7 @@ func (b *Basic) move(player *resolv.Rectangle) {
 }
 
 func (b *Basic) idleWalk() {
+	// MoveIncrement not only changes the position, but influences time
 	b.MoveIncrement += 0.01
 	center := ((b.Destinations[1].X - b.Destinations[0].X) / 2)
 	b.Collision.X = int32(float64(center) + (math.Sin(b.MoveIncrement*math.Pi) * float64(center)))
@@ -86,5 +87,10 @@ func (b *Basic) chasePlayer(player *resolv.Rectangle) {
 	b.Collision.X += int32(b.SpeedX * float32(b.direction))
 
 	// TODO Jump is obstacle is in enemy way
+	// res := b.Resolve(b.Ground, int32(b.SpeedX), 0)
 
+	// b.Collision.Y += int32(b.SpeedY)
+	// if res.Teleporting {
+	// 	b.Collision.Y -= b.jumpHeight
+	// }
 }

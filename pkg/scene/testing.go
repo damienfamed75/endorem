@@ -30,11 +30,12 @@ func (s *TestingScene) Preload() {
 	// Add all ground to the ground space.
 	s.ground.Add(
 		testing.NewPlane(0, 500, 800, 100, r.Orange),
+		testing.NewPlane(500, 450, 50, 50, r.Green),
 	)
 
 	// Add enemies to the enemy space. Must be of common.Entity
 	s.enemies.Add(
-		enemy.NewBasic(100, 468),
+		enemy.NewBasic(100, 468, s.ground),
 	)
 
 	s.player = player.NewPlayer(0, 468, func() {}, s.ground)

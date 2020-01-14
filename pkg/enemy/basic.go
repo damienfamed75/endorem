@@ -22,6 +22,7 @@ type Basic struct {
 	PlayerSeen      bool // If the enemy has spotted the enemy.
 	ShouldAttack    bool
 	AttackDistance  int32
+	jumpHeight      int32
 	Facing          common.Direction
 	Origin          r.Vector2
 	Destinations    [2]r.Vector2 // left and right destinations
@@ -29,6 +30,7 @@ type Basic struct {
 	Sprite          r.Texture2D
 	Collision       *resolv.Rectangle
 	Hitbox          *resolv.Rectangle
+	Ground          *resolv.Space
 
 	direction          int8
 	state              common.State
@@ -51,8 +53,10 @@ func setupBasic() *Basic {
 		Space:              resolv.NewSpace(),
 		Health:             2 + common.GlobalConfig.Enemy.AddedHealth,
 		SpeedX:             2,
+		SpeedY:             2,
 		AttackDistance:     30,
 		direction:          1,
+		jumpHeight:         8,
 		Facing:             common.Right,
 		state:              common.StateIdle,
 		speedMultiplier:    common.GlobalConfig.Enemy.MoveSpeedMultiplier,
@@ -66,7 +70,7 @@ func setupBasic() *Basic {
 }
 
 // NewBasic returns a configured basic enemy at the given coordinates.
-func NewBasic(x, y int) *Basic {
+func NewBasic(x, y int, ground *resolv.Space) *Basic {
 	b := setupBasic()
 
 	b.Origin = r.NewVector2(float32(x), float32(y))
@@ -89,6 +93,7 @@ func NewBasic(x, y int) *Basic {
 	b.Hitbox = resolv.NewRectangle(
 		0, 0, b.Sprite.Height, b.Sprite.Width,
 	)
+	b.Ground = ground
 
 	// Add the collision boxes to the enemy space.
 	b.Add(b.Collision, b.Hitbox)
