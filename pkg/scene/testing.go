@@ -41,6 +41,7 @@ func (s *TestingScene) Preload() {
 	s.player.AddTags(common.TagPlayer)
 
 	s.camera = common.NewEndoCamera(s.player.Collision)
+	s.camera.Zoom = 1
 
 	// Add the player to the world space.
 	s.world.Add(s.player)
@@ -77,7 +78,7 @@ func (s *TestingScene) Update(dt float32) {
 		switch t := en.GetData().(type) {
 		case *enemy.Slime: // Hurtbox
 			// If the hurtbox is colliding a player hitbox then take damage.
-			if t.FilterByTags(enemy.TagHurtbox).IsColliding(s.player.Hitbox) {
+			if t.FilterByTags(enemy.TagHurtbox).IsColliding(s.player.FilterByTags(player.TagHitbox)) {
 				t.TakeDamage()
 				// If the player is colliding with the enemy then they should take damage.
 			} else if s.player.FilterByTags(player.TagHurtbox).IsColliding(t.FilterOutByTags(enemy.TagAttackZone)) {

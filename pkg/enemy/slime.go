@@ -2,9 +2,11 @@ package enemy
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
+	"github.com/damienfamed75/aseprite"
 	"github.com/damienfamed75/endorem/pkg/common"
 
 	"github.com/SolarLune/resolv/resolv"
@@ -12,6 +14,7 @@ import (
 )
 
 type Slime struct {
+	Ase    *aseprite.File
 	Sprite r.Texture2D
 
 	Health int
@@ -64,13 +67,22 @@ func setupSlime() *Slime {
 // NewSlime creates a slime at the given position.
 func NewSlime(x, y int, world *resolv.Space) *Slime {
 	s := setupSlime()
+	var err error
+
+	s.Ase, err = aseprite.Open("assets/slime.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Queues a default animation.
+	s.Ase.Play("idle")
 
 	// Store the important spaces in the world.
 	s.player = world.FilterByTags(common.TagPlayer)
 	s.ground = world.FilterByTags(common.TagGround)
 
 	collision := resolv.NewRectangle(
-		int32(x), int32(y), s.Sprite.Width, s.Sprite.Height,
+		int32(x), int32(y), int32(s.Ase.FrameBoundaries().Width), int32(s.Ase.FrameBoundaries().Height),
 	)
 	collision.AddTags(TagHurtbox)
 
@@ -101,7 +113,9 @@ func (s *Slime) TakeDamage() {
 
 // Update gets called every frame and tells if the slime is going to
 // sit still, idle travel around, jump to the player, or attack.
-func (s *Slime) Update(float32) {
+func (s *Slime) Update(dt float32) {
+	s.Ase.Update(dt)
+
 	px, py := s.player.GetXY()
 
 	dist := resolv.Distance(
@@ -126,6 +140,7 @@ func (s *Slime) Update(float32) {
 			s.followPlayer()
 		}
 	} else {
+		s.Ase.Play("idle")
 		s.Rigidbody.Velocity.X = 0
 	}
 
@@ -156,7 +171,7 @@ func (s *Slime) followPlayer() {
 
 func (s *Slime) getPlayerDirection() float32 {
 	px, _ := s.player.GetXY()
-	// if px > s.GetX() {
+
 	if px > s.GetX() {
 		return 1
 	}
@@ -169,24 +184,56 @@ func (s *Slime) jump(height float32) bool {
 	// If the slime is on the ground and has waited long enough to jump
 	// again then perform a jump.
 	if s.OnGround() && time.Since(s.jumpTimeBegin) > time.Millisecond*s.jumpTimer {
-		// if s.onGround && time.Since(s.jumpTimeBegin) > time.Millisecond*s.jumpTimer {
-		// Reset jump timer.
-		s.jumpTimeBegin = time.Now()
+		if s.waitAndPlay("jump") {
+			// Reset jump timer.
+			s.jumpTimeBegin = time.Now()
 
-		// Set the vertical speed of the slime.
-		s.Rigidbody.Velocity.Y = height
-		// Update that the slime is not on the ground anymore.
-		s.onGround = false
+			// Set the vertical speed of the slime.
+			s.Rigidbody.Velocity.Y = height
+			// Update that the slime is not on the ground anymore.
+			s.onGround = false
+		}
+	} else if s.OnGround() {
+		s.Ase.Play("idle")
 	}
 
 	return !s.onGround
 }
 
+// waitAndPlay queues an animation to be played and
+// returns false until it has finishes.
+func (s *Slime) waitAndPlay(anim string) bool {
+	// If the wanted animation is already playing.
+	if s.Ase.IsPlaying(anim) {
+		// And the animation has finished.
+		if s.Ase.AnimationFinished() {
+			return true
+		}
+
+		return false
+	}
+
+	// Play the animation if it's not playing.
+	s.Ase.Play(anim)
+
+	return false
+}
+
 // Draw the sprite texture at the collision box coordinates.
 func (s *Slime) Draw() {
-	// sx, sy := s.GetXY()
-	// r.DrawTexture(s.Sprite, int(sx), int(sy), r.White)
-	r.DrawTexture(s.Sprite, int(s.GetX()), int(s.GetY()), r.White)
+	// srcX, srcY resemble the X and Y pixels where the active sprite is.
+	srcX, srcY := s.Ase.FrameBoundaries().X, s.Ase.FrameBoundaries().Y
+	w, h := s.Ase.FrameBoundaries().Width, s.Ase.FrameBoundaries().Height
+
+	// src resembles the cropped out area that the sprite is in the spritesheet.
+	src := r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
+
+	// dest is the world position that the slime should appear in.
+	dest := r.NewRectangle(float32(s.GetX()), float32(s.GetY()), float32(w), float32(h))
+
+	r.DrawTexturePro(
+		s.Sprite, src, dest, r.NewVector2(0, 0), 0, r.White,
+	)
 
 	// Draw debug messages about the entity's current information.
 	s.debugDraw()
@@ -215,7 +262,7 @@ func (s *Slime) debugDraw() {
 	// Draw the collision box for debugging reasons.
 	r.DrawRectangleLines(
 		int(s.GetX()), int(s.GetY()),
-		int(s.Sprite.Width), int(s.Sprite.Height),
+		int(s.Ase.FrameBoundaries().Width), int(s.Ase.FrameBoundaries().Width),
 		r.Red,
 	)
 }
