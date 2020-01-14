@@ -101,13 +101,13 @@ func (b *Basic) chasePlayer() {
 	// TODO stop movement if in attack range
 	b.Rigidbody.Velocity.X = b.travelSpeed * b.getPlayerDirection()
 
-	// TODO Jump is obstacle is in enemy way
-	// res := b.Resolve(b.Ground, int32(b.SpeedX), 0)
+	collision := b.Rigidbody.FilterByTags(common.TagCollision)
 
-	// b.Collision.Y += int32(b.SpeedY)
-	// if res.Teleporting {
-	// 	b.Collision.Y -= b.jumpHeight
-	// }
+	res := collision.Resolve(b.Ground, b.jumpAt*int32(b.getPlayerDirection()), 0)
+
+	if res.Colliding() && b.OnGround() {
+		b.Rigidbody.Velocity.Y = b.jumpHeight
+	}
 
 }
 func (b *Basic) getPlayerDirection() float32 {

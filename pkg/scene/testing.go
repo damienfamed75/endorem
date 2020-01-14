@@ -31,7 +31,7 @@ func (s *TestingScene) Preload() {
 	s.ground.Add(
 		testing.NewPlane(0, 500, 800, 100, r.Orange),
 		testing.NewPlane(500, 450, 50, 50, r.Green),
-		testing.NewPlane(200, 450, 50, 50, r.DarkGreen),
+		//testing.NewPlane(200, 450, 50, 50, r.DarkGreen),
 	)
 	s.ground.AddTags(common.TagGround)
 

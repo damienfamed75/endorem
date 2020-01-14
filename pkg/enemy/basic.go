@@ -35,7 +35,8 @@ type Basic struct {
 	PlayerSeen      bool // If the enemy has spotted the enemy.
 	ShouldAttack    bool
 	AttackDistance  int32
-	jumpHeight      int32
+	jumpHeight      float32
+	jumpAt          int32 // When the enemy should jump at distance from wall
 	Facing          common.Direction
 	Origin          r.Vector2
 	Destinations    [2]r.Vector2 // left and right destinations
@@ -66,10 +67,11 @@ func setupBasic() *Basic {
 		gravity:            common.GlobalConfig.Game.Gravity,
 		maxSpeedX:          6,
 		maxSpeedY:          4,
-		travelSpeed:        1,
+		travelSpeed:        2,
+		jumpHeight:         -8,
+		jumpAt:             -20,
 		AttackDistance:     30,
 		direction:          1,
-		jumpHeight:         8,
 		Facing:             common.Right,
 		state:              common.StateIdle,
 		speedMultiplier:    common.GlobalConfig.Enemy.MoveSpeedMultiplier,

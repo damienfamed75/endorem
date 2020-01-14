@@ -72,7 +72,7 @@ func NewSlime(x, y int, world *resolv.Space) *Slime {
 	collision := resolv.NewRectangle(
 		int32(x), int32(y), s.Sprite.Width, s.Sprite.Height,
 	)
-	collision.AddTags(TagHurtbox)
+	collision.AddTags(TagHurtbox, common.TagCollision)
 
 	s.Rigidbody = common.NewRigidbody(
 		int32(x), int32(y),
