@@ -2,6 +2,7 @@ package testing
 
 import (
 	"github.com/SolarLune/resolv/resolv"
+	"github.com/damienfamed75/endorem/pkg/physics"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -14,7 +15,8 @@ type SolidPlane struct {
 	Width  int32
 	Height int32
 
-	*resolv.Space
+	*physics.Rectangle
+	// *resolv.Space
 }
 
 // NewPlane returns the default shape of the testing plane which is meant for an
@@ -27,8 +29,9 @@ func NewSolidPlane(x, y, w, h int32, color r.Color) *SolidPlane {
 		resolv.NewRectangle(x, y, w, h),
 	)
 	return &SolidPlane{
-		Space: planeSpace,
-		Color: color,
+		// Space:     planeSpace,
+		Color:     color,
+		Rectangle: physics.NewRectangle(float32(x), float32(y), float32(w), float32(h)),
 
 		Width:  w,
 		Height: h,
@@ -37,11 +40,12 @@ func NewSolidPlane(x, y, w, h int32, color r.Color) *SolidPlane {
 
 // Draw creates a rectangle using Raylib and draws the outline of it.
 func (p *SolidPlane) Draw() {
-	x, y := p.Space.GetXY()
+	// x, y := p.Space.GetXY()
 
-	r.DrawRectangle(
-		int(x), int(y),
-		int(p.Width), int(p.Height),
-		p.Color,
-	)
+	// r.DrawRectangle(
+	// 	int(x), int(y),
+	// 	int(p.Width), int(p.Height),
+	// 	p.Color,
+	// )
+	r.DrawRectangleRec(p.Rectangle.Rectangle, p.Color)
 }

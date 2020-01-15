@@ -3,7 +3,7 @@ package player
 import (
 	"fmt"
 	"strconv"
-	
+
 	"github.com/damienfamed75/endorem/pkg/common"
 
 	r "github.com/lachee/raylib-goplus/raylib"
@@ -49,7 +49,26 @@ func (p *Player) debugDraw() {
 	// 	r.Red,
 	// )
 
-	r.DrawRectangleLinesEx(p.Body.Rectangle, 2, r.Red)
+	ground := p.Body.GetGround()
+	for i := range *ground {
+		if (*ground)[i].Overlaps(p.Body.Rectangle.Move(0, 1)) {
+			overlap := (*ground)[i].GetOverlapRec(p.Body.Rectangle.Move(0, 15))
+			r.DrawRectangleLinesEx(overlap, 1, r.Orange.Lerp(r.Red, 0.5))
+		} else if (*ground)[i].Overlaps(p.Body.Rectangle.Move(0, -1)) {
+			overlap := (*ground)[i].GetOverlapRec(p.Body.Rectangle.Move(0, -15))
+			r.DrawRectangleLinesEx(overlap, 1, r.Orange.Lerp(r.Red, 0.5))
+		}
+
+		if (*ground)[i].Overlaps(p.Body.Rectangle.Move(1, 0)) {
+			overlap := (*ground)[i].GetOverlapRec(p.Body.Rectangle.Move(15, 0))
+			r.DrawRectangleLinesEx(overlap, 1, r.Orange.Lerp(r.Red, 0.5))
+		} else if (*ground)[i].Overlaps(p.Body.Rectangle.Move(-1, 0)) {
+			overlap := (*ground)[i].GetOverlapRec(p.Body.Rectangle.Move(-15, 0))
+			r.DrawRectangleLinesEx(overlap, 1, r.Orange.Lerp(r.Red, 0.5))
+		}
+	}
+
+	r.DrawRectangleLinesEx(p.Body.Rectangle, 1, r.Red)
 
 	if p.isAttacking {
 		r.DrawRectangleLines(

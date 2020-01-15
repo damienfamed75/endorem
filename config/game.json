@@ -9,7 +9,7 @@
             "defaultSpeed": 0.1
         },
         "volume": 100,
-		"defaultScene": "testing scene",
+		"defaultScene": "level one",
 		"gravity": 0.5
     },
     "player": {
