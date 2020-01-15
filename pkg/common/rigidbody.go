@@ -81,26 +81,73 @@ func (r *Rigidbody) Update() {
 		r.Velocity.Y = float32(r.maxSpeedY)
 	}
 
-	// Ground check
-	down := r.ground.Resolve(r.collisions, 0, r.maxSpeedY)
-	r.onGround = down.Colliding()
-
 	// Misc.
 	x, y := int32(r.Velocity.X), int32(r.Velocity.Y)
 
-	// X
+	// Ground check
+	down := r.ground.Resolve(r.collisions, 0, y+1)
+	// down := r.ground.Resolve(r.collisions, 0, y+1)
+	r.onGround = down.Colliding()
+
 	if res := r.ground.Resolve(r.collisions, x, 0); res.Colliding() {
-		x = res.ResolveX
-		r.Velocity.X = 0
+		// x = res.ResolveX
+		r.Velocity.X = float32(res.ResolveX)
 	}
-
-	r.Space.Move(x, 0)
-
-	// Y
 	if res := r.ground.Resolve(r.collisions, 0, y); res.Colliding() {
-		y = res.ResolveY
-		r.Velocity.Y = 0
+		// y = res.ResolveY
+		r.Velocity.Y = float32(res.ResolveY)
 	}
+
+	r.Space.Move(int32(r.Velocity.X), int32(r.Velocity.Y))
+
+	// if down.Teleporting && r.onGround {
+	// 	// log.Print(r.onGround)
+	// 	if down.ResolveY < 0 {
+	// 		r.Space.Move(0, down.ResolveY)
+	// 		y = 0
+	// 		r.Velocity.Y = 0
+	// 	}
+	// 	log.Printf("TELEPORT RESY[%v] VELY\n", down.ResolveY)
+	// }
+
+	// // X
+	// if res := r.ground.Resolve(r.collisions, x, 0); res.Colliding() {
+	// 	fmt.Printf("RESOLVE RESX[%v] XSPD[%v] TELE[%v]\n", res.ResolveX, x, res.Teleporting)
+	// 	if res.ResolveX > r.maxSpeedX {
+	// 		res.ResolveX = r.maxSpeedX
+	// 	}
+	// 	if res.ResolveX < -r.maxSpeedX {
+	// 		res.ResolveX = -r.maxSpeedX
+	// 	}
+	// 	x = res.ResolveX
+	// 	r.Velocity.X = 0
+	// 	// if res.ResolveX < r.maxSpeedX && res.ResolveX > -r.maxSpeedX {
+	// 	// } else if res.Teleporting {
+	// 	// 	x = 0
+	// 	// 	r.Velocity.X = 0
+	// 	// }
+
+	// }
+
+	// r.Space.Move(x, 0)
+
+	// // Y
+	// if res := r.ground.Resolve(r.collisions, 0, y); res.Colliding() {
+	// 	if res.ResolveY > r.maxSpeedY {
+	// 		res.ResolveY = r.maxSpeedY
+	// 	}
+	// 	if res.ResolveY < -r.maxSpeedY {
+	// 		res.ResolveY = -r.maxSpeedY
+	// 	}
+	// 	y = res.ResolveY
+	// 	r.Velocity.Y = 0
+	// 	// if res.ResolveY < r.maxSpeedY && res.ResolveY > -r.maxSpeedY {
+	// 	// } else if res.Teleporting {
+	// 	// 	y = 0
+	// 	// 	r.Velocity.Y = 0
+	// 	// }
+	// 	log.Printf("COLLISION Y[%v]\n", res.ResolveY)
+	// }
 
 	r.Space.Move(0, y)
 }
