@@ -1,8 +1,6 @@
 package player
 
 import (
-	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/SolarLune/resolv/resolv"
@@ -117,6 +115,59 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	return p
 }
 
+// Update player
+func (p *Player) Update(dt float32) r.Vector2 {
+	p.state = common.StateIdle
+
+	p.movePlayer()
+
+	maskTar := r.Vector2{
+		X: float32(p.GetX()),
+		Y: float32(p.GetY()),
+	}
+	p.MaskObj.checkDirection(maskTar, p.Facing)
+	p.MaskObj.Update()
+
+	p.checkAttack()
+
+	// p.Rigidbody.Update(dt)
+	p.Body.Update(dt)
+	return r.NewVector2(float32(p.Body.X), float32(p.Body.Y))
+	// return r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
+}
+
+// Draw creates a rectangle using Raylib and draws the outline of it.
+func (p *Player) Draw() {
+	p.MaskObj.Draw()
+
+	if p.isCrouched {
+		r.DrawTexture(p.SpriteDuck, int(p.GetX()), int(p.GetY()), r.White)
+	} else {
+		r.DrawTexture(
+			p.SpriteStand,
+			int(p.Body.Position().X),
+			int(p.Body.Position().Y),
+			r.White,
+		)
+		// r.DrawTexture(p.SpriteStand, int(p.GetX()), int(p.GetY()), r.White)
+	}
+	p.debugDraw()
+}
+
+func (p *Player) TakeDamage() {
+	// The player has their invincibility frames, and if they have run out of
+	// time of that then they can take more damage.
+	if time.Since(p.healthBefore) >= time.Millisecond*p.invincibleTimer {
+		p.healthBefore = time.Now()
+
+		p.Health--
+		if p.Health <= 0 {
+			p.deathFunc()
+			p.state = common.StateDead // :c
+		}
+	}
+}
+
 // movePlayer handles key binded events involving the movement of the character
 func (p *Player) movePlayer() {
 
@@ -175,41 +226,6 @@ func (p *Player) movePlayer() {
 	// return r.NewVector2(float32(x), float32(y))
 }
 
-// func (p *Player) checkCollision(x, y int32) (newX, newY int32) {
-// 	// Check wall collision
-
-// 	// if r.IsKeyPressed(r.KeyS) {
-// 	// 	if res := p.Ground.Resolve(p.Collision, x, y+(p.SpriteStand.Height/2)); res.Colliding() {
-
-// 	// 		y = res.ResolveY
-// 	// 	}
-// 	// }
-// 	if res := p.Ground.Resolve(p.Collision, x, 0); res.Colliding() {
-// 		x = res.ResolveX
-// 		p.SpeedX = 0
-// 	}
-
-// 	res := p.Ground.Resolve(p.Collision, 0, y+4)
-
-// 	if y < 0 || (res.Teleporting && res.ResolveY < -p.Collision.H/2) {
-// 		res = resolv.Collision{}
-// 	}
-// 	if !res.Colliding() {
-// 		res = p.Ground.Resolve(p.Collision, 0, y)
-// 	}
-
-// 	if res.Colliding() {
-// 		y = res.ResolveY
-
-// 		p.SpeedY = 0
-// 	}
-
-// 	p.Move(x, y)
-// 	// p.Collision.X += x
-// 	// p.Collision.Y += y
-
-// 	return x, y
-// }
 func (p *Player) playerJump() {
 	if r.IsKeyPressed(r.KeyW) && p.Body.OnGround() {
 		// fmt.Println("JUMP!")
@@ -252,108 +268,4 @@ func (p *Player) attack() {
 	p.attackBefore = time.Now() // Reset timerS
 	p.Add(p.Hitbox)
 	p.isAttacking = true
-}
-
-// Update player
-func (p *Player) Update(dt float32) r.Vector2 {
-	p.state = common.StateIdle
-
-	p.movePlayer()
-
-	maskTar := r.Vector2{
-		X: float32(p.GetX()),
-		Y: float32(p.GetY()),
-	}
-	p.MaskObj.checkDirection(maskTar, p.Facing)
-	p.MaskObj.Update()
-
-	p.checkAttack()
-
-	// p.Rigidbody.Update(dt)
-	p.Body.Update(dt)
-	return r.NewVector2(float32(p.Body.X), float32(p.Body.Y))
-	// return r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
-}
-
-// Draw creates a rectangle using Raylib and draws the outline of it.
-func (p *Player) Draw() {
-	p.MaskObj.Draw()
-
-	if p.isCrouched {
-		r.DrawTexture(p.SpriteDuck, int(p.GetX()), int(p.GetY()), r.White)
-	} else {
-		r.DrawTexture(
-			p.SpriteStand,
-			int(p.Body.Position().X),
-			int(p.Body.Position().Y),
-			r.White,
-		)
-		// r.DrawTexture(p.SpriteStand, int(p.GetX()), int(p.GetY()), r.White)
-	}
-	p.debugDraw()
-}
-
-func (p *Player) TakeDamage() {
-	// The player has their invincibility frames, and if they have run out of
-	// time of that then they can take more damage.
-	if time.Since(p.healthBefore) >= time.Millisecond*p.invincibleTimer {
-		p.healthBefore = time.Now()
-
-		p.Health--
-		if p.Health <= 0 {
-			p.deathFunc()
-			p.state = common.StateDead // :c
-		}
-	}
-}
-
-func (p *Player) debugDraw() {
-	if p.SpeedY < 0 {
-		p.state = common.StateJumping
-	} else if p.SpeedY > 0 {
-		p.state = common.StateFalling
-	}
-
-	// Draw health.
-	r.DrawText(
-		"HP: "+strconv.Itoa(p.Health),
-		int(p.Collision.X), int(p.Collision.Y-(p.Collision.W/2)), 10,
-		r.White,
-	)
-
-	px, py := p.GetXY()
-
-	r.DrawText(
-		fmt.Sprintf("P[%v,%v]", px, py),
-		int(p.Collision.X), int(p.Collision.Y+(p.Collision.H)+20), 10,
-		r.White,
-	)
-
-	// Draw state.
-	r.DrawText(
-		p.state.String(),
-		int(p.Collision.X), int(p.Collision.Y+p.Collision.H), 10,
-		r.White,
-	)
-	r.DrawText(
-		p.Facing.String(),
-		int(p.Collision.X), int(p.Collision.Y+p.Collision.H+10), 10,
-		r.White,
-	)
-
-	// r.DrawRectangleLines(
-	// 	int(p.GetX()), int(p.GetY()),
-	// 	int(p.SpriteStand.Width), int(p.SpriteStand.Height),
-	// 	r.Red,
-	// )
-
-	r.DrawRectangleLinesEx(p.Body.Rectangle, 2, r.Red)
-
-	if p.isAttacking {
-		r.DrawRectangleLines(
-			int(p.Hitbox.X), int(p.Hitbox.Y),
-			int(p.Hitbox.W), int(p.Hitbox.H),
-			r.Green,
-		)
-	}
 }
