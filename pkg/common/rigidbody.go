@@ -65,6 +65,12 @@ func (r *Rigidbody) SetGravity(g float32) {
 	r.gravity = g
 }
 
+func (r *Rigidbody) AddSpace(space *resolv.Space) {
+	if space.HasTags(TagCollision) {
+		r.collisions.Add(space)
+	}
+	r.Add(space)
+}
 func (r *Rigidbody) Update() {
 	// Gravity
 	if !r.onGround {

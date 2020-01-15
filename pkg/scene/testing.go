@@ -30,8 +30,8 @@ func (s *TestingScene) Preload() {
 	// Add all ground to the ground space.
 	s.ground.Add(
 		testing.NewPlane(0, 500, 800, 100, r.Orange),
-		testing.NewPlane(500, 450, 50, 50, r.Green),
-		//testing.NewPlane(200, 450, 50, 50, r.DarkGreen),
+	//	testing.NewPlane(500, 450, 50, 50, r.Green),
+	//testing.NewPlane(200, 450, 50, 50, r.DarkGreen),
 	)
 	s.ground.AddTags(common.TagGround)
 
@@ -48,8 +48,9 @@ func (s *TestingScene) Preload() {
 
 	// Add enemies to the enemy space. Must be of common.Entity
 	s.enemies.Add(
-		enemy.NewBasic(100, 468, s.world),
-		enemy.NewSlime(300, 400, s.world),
+		//enemy.NewBasic(100, 468, s.world),
+		//enemy.NewSlime(300, 400, s.world),
+		enemy.NewFungalBoss(700, 468, s.world),
 	)
 
 	// Add enemies to the world space.
