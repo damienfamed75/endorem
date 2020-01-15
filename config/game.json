@@ -9,7 +9,8 @@
             "defaultSpeed": 0.1
         },
         "volume": 100,
-        "defaultScene": "level one"
+		"defaultScene": "testing scene",
+		"gravity": 0.5
     },
     "player": {
         "addedHealth": 0,
@@ -24,6 +25,7 @@
         "attackTimer": 250,
         "invincibleTimer": 1000,
         "waitTime": 1000,
-        "visionDistance": 250
+		"visionDistance": 250,
+		"spawnDensity": 0.25
     }
 }

@@ -11,37 +11,46 @@ func (b *Basic) debugDraw() {
 	// Draw health.
 	r.DrawText(
 		"HP: "+strconv.Itoa(b.Health),
-		int(b.Collision.X), int(b.Collision.Y-(b.Collision.W/2)), 10,
+		int(b.GetX()), int(b.GetY()-(b.Sprite.Width/2)), 10,
 		r.White,
 	)
 	// Draw state.
 	r.DrawText(
 		b.state.String(),
-		int(b.Collision.X), int(b.Collision.Y+b.Collision.H), 10,
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height), 10,
 		r.White,
 	)
 	// Draw facing direction.
 	r.DrawText(
 		b.Facing.String(),
-		int(b.Collision.X), int(b.Collision.Y+b.Collision.H+10), 10,
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height+10), 10,
 		r.White,
 	)
 	r.DrawText(
 		fmt.Sprintf("PSen: %v Atk: %v", b.PlayerSeen, b.ShouldAttack),
-		int(b.Collision.X), int(b.Collision.Y+b.Collision.H+20), 10,
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height+20), 10,
 		r.White,
 	)
-
+	r.DrawText(
+		fmt.Sprintf("hit: [%v, %v] Col: [%v , %v]", b.Hitbox.X, b.Hitbox.Y, b.Collision.X, b.Collision.Y),
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height+30), 10,
+		r.White,
+	)
+	r.DrawText(
+		fmt.Sprintf("space: [%v, %v]", b.Rigidbody.GetX(), b.Rigidbody.GetY()),
+		int(b.GetX()), int(b.GetY()+b.Sprite.Height+40), 10,
+		r.White,
+	)
 	// Draw the collision box for debugging reasons.
 	r.DrawRectangleLines(
-		int(b.Collision.X), int(b.Collision.Y),
-		int(b.Collision.W), int(b.Collision.H),
+		int(b.GetX()), int(b.GetY()),
+		int(b.Sprite.Width), int(b.Sprite.Height),
 		r.Red,
 	)
 
 	enemyCenterBottom := r.NewVector2(
-		float32(b.Collision.X)+float32(b.Collision.W/2),
-		float32(b.Collision.Y+b.Collision.H),
+		float32(b.GetX())+float32(b.Sprite.Width/2),
+		float32(b.GetY()+b.Sprite.Height),
 	)
 
 	r.DrawLineEx(
@@ -56,11 +65,20 @@ func (b *Basic) debugDraw() {
 	)
 
 	// If the enemy is attacking then draw the debug collision box.
-	if b.isAttacking {
+	// if b.isAttacking {
+	if !b.Hitbox.HasTags(TagAttackZone) {
+		r.DrawRectangleLines(
+			int(b.Hitbox.X), int(b.Hitbox.Y),
+			int(b.Hitbox.W), int(b.Hitbox.H),
+			r.Red,
+		)
+	} else {
 		r.DrawRectangleLines(
 			int(b.Hitbox.X), int(b.Hitbox.Y),
 			int(b.Hitbox.W), int(b.Hitbox.H),
 			r.Green,
 		)
 	}
+
+	// }
 }

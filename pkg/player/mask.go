@@ -39,9 +39,14 @@ func NewMask() *Mask {
 
 	return m
 }
+
+// setMovePattern will change how the mask will move around the player
 func (m *Mask) setMovePattern(moveType string) {
 	m.movePattern = "figureEight"
 }
+
+// checkDirecton will change the target
+//TODO depending on movePattern
 func (m *Mask) checkDirection(diff r.Vector2, pFacing common.Direction) {
 
 	var newTarget r.Vector2
