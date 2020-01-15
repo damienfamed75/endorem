@@ -1,3 +1,5 @@
+github.com/ByteArena/box2d v1.0.2 h1:f7f9KEQWhCs1n516DMLzi5w6u0MeeE78Mes4fWMcj9k=
+github.com/ByteArena/box2d v1.0.2/go.mod h1:LzEuxY9iCz+tskfWCY3o0ywYBRafDDugdSj+/YGI6sE=
 github.com/SolarLune/dngn v0.0.0-20181202055205-60386dd4c3c8 h1:/3e9xPZ+47PAo7gEytn2Dqohyiy89xqm6p23HKyoV04=
 github.com/SolarLune/dngn v0.0.0-20181202055205-60386dd4c3c8/go.mod h1:quyTPloRNdH0rcbsoY06cmCpLqUlQDAmhEhrQbykW7Q=
 github.com/SolarLune/paths v0.0.0-20190106103957-acfca40d365f h1:Yqirp0/PnvPWFPRq9qG+vxVKNzl9aD5y+iX/m/g864o=

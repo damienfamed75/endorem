@@ -3,6 +3,7 @@ module github.com/damienfamed75/endorem
 go 1.13
 
 require (
+	github.com/ByteArena/box2d v1.0.2 // indirect
 	github.com/SolarLune/dngn v0.0.0-20181202055205-60386dd4c3c8
 	github.com/SolarLune/paths v0.0.0-20190106103957-acfca40d365f
 	github.com/SolarLune/resolv v0.0.0-20190821203317-2f6176d8d107

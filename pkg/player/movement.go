@@ -7,6 +7,7 @@ import (
 
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
+	"github.com/damienfamed75/endorem/pkg/physics"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -22,6 +23,7 @@ type Player struct {
 	MaxHealth   int
 	IsDead      bool
 	Facing      common.Direction
+	Body        *physics.Body
 
 	maxSpeedX  int32
 	maxSpeedY  int32
@@ -77,6 +79,12 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	// Set the death function that'll be called when the player dies.
 	p.deathFunc = deathFunc
 
+	p.Body = physics.NewBody(
+		float32(x), float32(y),
+		float32(p.SpriteStand.Width), float32(p.SpriteStand.Height),
+		20, 60,
+	)
+
 	// Setup collision and trigger boxes for the player.
 	p.Collision = resolv.NewRectangle(
 		int32(x), int32(y),
@@ -119,22 +127,27 @@ func (p *Player) movePlayer() {
 
 	// Slows down player movement after key is released
 	if p.Rigidbody.Velocity.X > friction {
-		p.Rigidbody.Velocity.X -= friction
+		p.Body.Velocity.X -= friction
+		// p.Rigidbody.Velocity.X -= friction
 	} else if p.Rigidbody.Velocity.X < -friction {
-		p.Rigidbody.Velocity.X += friction
+		p.Body.Velocity.X += friction
+		// p.Rigidbody.Velocity.X += friction
 	} else {
-		p.Rigidbody.Velocity.X = 0
+		p.Body.Velocity.X = 0
+		// p.Rigidbody.Velocity.X = 0
 	}
 
 	// Controller Events
 	// TODO For simplicity in testing the velocity is the maxSpeed of X
 	if r.IsKeyDown(r.KeyD) {
-		p.Rigidbody.Velocity.X += float32(p.maxSpeedX)
+		p.Body.Velocity.X += float32(p.maxSpeedX)
+		// p.Rigidbody.Velocity.X += float32(p.maxSpeedX)
 		p.Facing = common.Right
 		p.state = common.StateRight
 	}
 	if r.IsKeyDown(r.KeyA) {
-		p.Rigidbody.Velocity.X -= float32(p.maxSpeedX)
+		p.Body.Velocity.X -= float32(p.maxSpeedX)
+		// p.Rigidbody.Velocity.X -= float32(p.maxSpeedX)
 		p.Facing = common.Left
 		p.state = common.StateLeft
 	}
@@ -198,11 +211,16 @@ func (p *Player) movePlayer() {
 // 	return x, y
 // }
 func (p *Player) playerJump() {
-	if r.IsKeyPressed(r.KeyW) && p.OnGround() {
-		p.Rigidbody.Velocity.Y = p.jumpHeight
+	fmt.Println(p.Body.OnGround())
+	if r.IsKeyPressed(r.KeyW) && p.Body.OnGround() {
+		// fmt.Println("JUMP!")
+		// if r.IsKeyPressed(r.KeyW) && p.OnGround() {
+		p.Body.Velocity.Y = p.jumpHeight
+		// p.Rigidbody.Velocity.Y = p.jumpHeight
 		p.madeJump = true
 	} else if r.IsKeyPressed(r.KeyW) && p.madeJump {
-		p.Rigidbody.Velocity.Y = p.jumpHeight
+		p.Body.Velocity.Y = p.jumpHeight
+		// p.Rigidbody.Velocity.Y = p.jumpHeight
 		p.madeJump = false
 	}
 }
@@ -252,8 +270,10 @@ func (p *Player) Update(dt float32) r.Vector2 {
 
 	p.checkAttack()
 
-	p.Rigidbody.Update(dt)
-	return r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
+	// p.Rigidbody.Update(dt)
+	p.Body.Update(dt)
+	return r.NewVector2(float32(p.Body.X), float32(p.Body.Y))
+	// return r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
 }
 
 // Draw creates a rectangle using Raylib and draws the outline of it.
@@ -263,7 +283,13 @@ func (p *Player) Draw() {
 	if p.isCrouched {
 		r.DrawTexture(p.SpriteDuck, int(p.GetX()), int(p.GetY()), r.White)
 	} else {
-		r.DrawTexture(p.SpriteStand, int(p.GetX()), int(p.GetY()), r.White)
+		r.DrawTexture(
+			p.SpriteStand,
+			int(p.Body.Position().X),
+			int(p.Body.Position().Y),
+			r.White,
+		)
+		// r.DrawTexture(p.SpriteStand, int(p.GetX()), int(p.GetY()), r.White)
 	}
 	p.debugDraw()
 }
@@ -316,11 +342,14 @@ func (p *Player) debugDraw() {
 		r.White,
 	)
 
-	r.DrawRectangleLines(
-		int(p.GetX()), int(p.GetY()),
-		int(p.SpriteStand.Width), int(p.SpriteStand.Height),
-		r.Red,
-	)
+	// r.DrawRectangleLines(
+	// 	int(p.GetX()), int(p.GetY()),
+	// 	int(p.SpriteStand.Width), int(p.SpriteStand.Height),
+	// 	r.Red,
+	// )
+
+	r.DrawRectangleLinesEx(p.Body.Rectangle, 2, r.Red)
+
 	if p.isAttacking {
 		r.DrawRectangleLines(
 			int(p.Hitbox.X), int(p.Hitbox.Y),

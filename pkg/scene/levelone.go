@@ -80,11 +80,11 @@ func (l *LevelOne) Preload() {
 			)
 		case room.Hatch: // Hatches
 			l.doors.Add(
-				testing.NewPlane(
-					int32(x*mapScale), int32(y*mapScale),
-					int32(mapScale), int32(mapScale),
-					r.Gold,
-				),
+			// testing.NewPlane(
+			// 	int32(x*mapScale), int32(y*mapScale),
+			// 	int32(mapScale), int32(mapScale),
+			// 	r.Gold,
+			// ),
 			)
 		case room.FloatingPlatform1: // Floating Platform 1
 			l.ground.Add(

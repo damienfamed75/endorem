@@ -6,7 +6,6 @@ import (
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
 	"github.com/damienfamed75/endorem/pkg/player"
-	"github.com/damienfamed75/endorem/pkg/testing"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -30,23 +29,23 @@ func (s *MenuScene) Preload() {
 	s.exit = resolv.NewSpace()
 
 	//Add all ground and walls to spaces
-	s.ground.Add(
-		// ground
-		testing.NewPlane(0, 250, 250, 50, r.Orange),
-		testing.NewPlane(300, 250, 100, 50, r.Orange),
+	// s.ground.Add(
+	// 	// ground
+	// 	testing.NewPlane(0, 250, 250, 50, r.Orange),
+	// 	testing.NewPlane(300, 250, 100, 50, r.Orange),
 
-		//walls
-		testing.NewPlane(0, 0, 50, 200, r.Orange),
-		testing.NewPlane(350, 0, 50, 250, r.Orange),
-	)
+	// 	//walls
+	// 	testing.NewPlane(0, 0, 50, 200, r.Orange),
+	// 	testing.NewPlane(350, 0, 50, 250, r.Orange),
+	// )
 
-	// exits
-	s.startRun.Add(
-		testing.NewPlane(250, 290, 50, 10, r.Green),
-	)
-	s.exit.Add(
-		testing.NewPlane(0, 200, 10, 50, r.Green),
-	)
+	// // exits
+	// s.startRun.Add(
+	// 	testing.NewPlane(250, 290, 50, 10, r.Green),
+	// )
+	// s.exit.Add(
+	// 	testing.NewPlane(0, 200, 10, 50, r.Green),
+	// )
 
 	// Create player and camera
 	s.player = player.NewPlayer(200, 268, func() {}, s.ground)
