@@ -87,7 +87,7 @@ func (b *Body) Update(dt float32) {
 			b.onGround = true
 		}
 
-		if b.Velocity.Y < -b.gravity {
+		if b.Velocity.Y < -(b.gravity * dt) {
 			b.onGround = false
 		}
 

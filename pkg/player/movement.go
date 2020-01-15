@@ -211,7 +211,6 @@ func (p *Player) movePlayer() {
 // 	return x, y
 // }
 func (p *Player) playerJump() {
-	fmt.Println(p.Body.OnGround())
 	if r.IsKeyPressed(r.KeyW) && p.Body.OnGround() {
 		// fmt.Println("JUMP!")
 		// if r.IsKeyPressed(r.KeyW) && p.OnGround() {
