@@ -9,6 +9,8 @@ package common
 // handles collisions and corrects itself.
 
 import (
+	"fmt"
+
 	r "github.com/lachee/raylib-goplus/raylib"
 
 	"github.com/SolarLune/resolv/resolv"
@@ -65,11 +67,13 @@ func (r *Rigidbody) SetGravity(g float32) {
 	r.gravity = g
 }
 
-func (r *Rigidbody) Update() {
+func (r *Rigidbody) Update(dt float32) {
+
+	// r.Velocity.Y *= dt
+	// r.Velocity.X *= dt
 	// Gravity
-	if !r.onGround {
-		r.Velocity.Y += r.gravity
-	}
+	r.Velocity.Y += r.gravity
+
 	// max speed checks
 	if r.Velocity.X > float32(r.maxSpeedX) {
 		r.Velocity.X = float32(r.maxSpeedX)
@@ -89,65 +93,70 @@ func (r *Rigidbody) Update() {
 	// down := r.ground.Resolve(r.collisions, 0, y+1)
 	r.onGround = down.Colliding()
 
+	// X
 	if res := r.ground.Resolve(r.collisions, x, 0); res.Colliding() {
+		// if res.ResolveX > r.maxSpeedX {
+		// 	res.ResolveX = r.maxSpeedX
+		// }
+		// if res.ResolveX < -r.maxSpeedX {
+		// 	res.ResolveX = -r.maxSpeedX
+		// }
+		if res.Teleporting {
+			fmt.Printf("teleport(x) resx[%v] spdx[%v]\n", res.ResolveX, x)
+			// if res.ResolveX > 32 || res.ResolveX < -32 {
+			// 	res = r.ground.Resolve(r.collisions, 0, y)
+			// 	fmt.Printf("stuck check resy[%v] spdy[%v]\n", res.ResolveY, y)
+			// 	r.Velocity.Y = 0
+			// 	r.Move(0, res.ResolveY)
+			// }
+			res.ResolveX = -x
+			x = 0
+			r.Velocity.X = float32(-x)
+		} else {
+			fmt.Printf("resolve (x) resx[%v] spdx[%v]\n", res.ResolveX, x)
+			// x *= -1
+			x = res.ResolveX
+		}
+
+		res.ShapeA.Move(res.ResolveX, 0)
+		// res.ShapeB.Move(-res.ResolveX, 0)
+
 		// x = res.ResolveX
-		r.Velocity.X = float32(res.ResolveX)
+		// r.Velocity.X = 0
 	}
+
+	r.Space.Move(x, 0)
+
+	// Y
 	if res := r.ground.Resolve(r.collisions, 0, y); res.Colliding() {
+		// if res.ResolveY > r.maxSpeedY {
+		// 	res.ResolveY = r.maxSpeedY
+		// }
+		// if res.ResolveY < -r.maxSpeedY {
+		// 	res.ResolveY = -r.maxSpeedY
+		// }
+
+		// if res.Teleporting {
+		// 	fmt.Printf("teleport(y) resy[%v] spdy[%v]\n", res.ResolveY, y)
+		// 	res.ResolveY = -y
+		// }
+
 		// y = res.ResolveY
-		r.Velocity.Y = float32(res.ResolveY)
+		// r.Velocity.Y = 0
+
+		if res.Teleporting {
+			fmt.Printf("teleport(y) resy[%v] spdy[%v]\n", res.ResolveY, y)
+			res.ResolveY = -y
+			y = 0
+			r.Velocity.Y = float32(-y)
+		} else {
+			fmt.Printf("resolve (y) resy[%v] spdy[%v]\n", res.ResolveY, y)
+			// x *= -1
+			y = res.ResolveY
+		}
+
+		res.ShapeA.Move(0, res.ResolveY)
 	}
-
-	r.Space.Move(int32(r.Velocity.X), int32(r.Velocity.Y))
-
-	// if down.Teleporting && r.onGround {
-	// 	// log.Print(r.onGround)
-	// 	if down.ResolveY < 0 {
-	// 		r.Space.Move(0, down.ResolveY)
-	// 		y = 0
-	// 		r.Velocity.Y = 0
-	// 	}
-	// 	log.Printf("TELEPORT RESY[%v] VELY\n", down.ResolveY)
-	// }
-
-	// // X
-	// if res := r.ground.Resolve(r.collisions, x, 0); res.Colliding() {
-	// 	fmt.Printf("RESOLVE RESX[%v] XSPD[%v] TELE[%v]\n", res.ResolveX, x, res.Teleporting)
-	// 	if res.ResolveX > r.maxSpeedX {
-	// 		res.ResolveX = r.maxSpeedX
-	// 	}
-	// 	if res.ResolveX < -r.maxSpeedX {
-	// 		res.ResolveX = -r.maxSpeedX
-	// 	}
-	// 	x = res.ResolveX
-	// 	r.Velocity.X = 0
-	// 	// if res.ResolveX < r.maxSpeedX && res.ResolveX > -r.maxSpeedX {
-	// 	// } else if res.Teleporting {
-	// 	// 	x = 0
-	// 	// 	r.Velocity.X = 0
-	// 	// }
-
-	// }
-
-	// r.Space.Move(x, 0)
-
-	// // Y
-	// if res := r.ground.Resolve(r.collisions, 0, y); res.Colliding() {
-	// 	if res.ResolveY > r.maxSpeedY {
-	// 		res.ResolveY = r.maxSpeedY
-	// 	}
-	// 	if res.ResolveY < -r.maxSpeedY {
-	// 		res.ResolveY = -r.maxSpeedY
-	// 	}
-	// 	y = res.ResolveY
-	// 	r.Velocity.Y = 0
-	// 	// if res.ResolveY < r.maxSpeedY && res.ResolveY > -r.maxSpeedY {
-	// 	// } else if res.Teleporting {
-	// 	// 	y = 0
-	// 	// 	r.Velocity.Y = 0
-	// 	// }
-	// 	log.Printf("COLLISION Y[%v]\n", res.ResolveY)
-	// }
 
 	r.Space.Move(0, y)
 }

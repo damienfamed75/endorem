@@ -9,7 +9,7 @@ import (
 )
 
 // Update is non drawing related functionality with the enemy.
-func (b *Basic) Update(float32) {
+func (b *Basic) Update(dt float32) {
 	px, py := b.player.GetXY()
 
 	dist := resolv.Distance(
@@ -28,7 +28,7 @@ func (b *Basic) Update(float32) {
 		b.Hitbox.AddTags(TagAttackZone)
 	}
 
-	b.Rigidbody.Update()
+	b.Rigidbody.Update(dt)
 }
 
 func (b *Basic) attack() {

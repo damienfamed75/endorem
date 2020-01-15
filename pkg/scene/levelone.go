@@ -111,7 +111,7 @@ func (l *LevelOne) Preload() {
 }
 
 func (l *LevelOne) Update(dt float32) {
-	l.camera.Update(l.player.Update())
+	l.camera.Update(l.player.Update(dt))
 }
 
 func (l *LevelOne) Draw() {
