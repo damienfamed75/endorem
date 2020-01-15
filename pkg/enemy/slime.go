@@ -101,7 +101,7 @@ func (s *Slime) TakeDamage() {
 
 // Update gets called every frame and tells if the slime is going to
 // sit still, idle travel around, jump to the player, or attack.
-func (s *Slime) Update(float32) {
+func (s *Slime) Update(dt float32) {
 	px, py := s.player.GetXY()
 
 	dist := resolv.Distance(
@@ -130,7 +130,7 @@ func (s *Slime) Update(float32) {
 	}
 
 	// Update the slime's position according to gravity and checks collisions
-	s.Rigidbody.Update()
+	s.Rigidbody.Update(dt)
 }
 
 func (s *Slime) attack() {

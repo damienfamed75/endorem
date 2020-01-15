@@ -30,8 +30,8 @@ func (s *TestingScene) Preload() {
 	// Add all ground to the ground space.
 	s.ground.Add(
 		testing.NewPlane(0, 500, 800, 100, r.Orange),
-	//	testing.NewPlane(500, 450, 50, 50, r.Green),
-	//testing.NewPlane(200, 450, 50, 50, r.DarkGreen),
+		testing.NewPlane(500, 400, 50, 100, r.Green),
+		//testing.NewPlane(200, 450, 50, 50, r.DarkGreen),
 	)
 	s.ground.AddTags(common.TagGround)
 
@@ -60,7 +60,7 @@ func (s *TestingScene) Preload() {
 // Update frames
 func (s *TestingScene) Update(dt float32) {
 	// Update the camera and player.
-	s.camera.Update(s.player.Update())
+	s.camera.Update(s.player.Update(dt))
 
 	// Update all the enemies.
 	for i := range *s.enemies {

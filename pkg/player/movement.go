@@ -238,7 +238,7 @@ func (p *Player) attack() {
 }
 
 // Update player
-func (p *Player) Update() r.Vector2 {
+func (p *Player) Update(dt float32) r.Vector2 {
 	p.state = common.StateIdle
 
 	p.movePlayer()
@@ -252,7 +252,7 @@ func (p *Player) Update() r.Vector2 {
 
 	p.checkAttack()
 
-	p.Rigidbody.Update()
+	p.Rigidbody.Update(dt)
 	return r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
 }
 

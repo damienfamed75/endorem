@@ -85,13 +85,13 @@ func NewFungalBoss(x, y int, world *resolv.Space) *FungalBoss {
 }
 
 // Update FungalBosses every frame, checking attack and validating rigidbody collision
-func (f *FungalBoss) Update(float32) {
+func (f *FungalBoss) Update(dt float32) {
 	f.determineAttack()
 
 	// Movement of spores
 	f.spores.Update()
 
-	f.Rigidbody.Update()
+	f.Rigidbody.Update(dt)
 }
 
 func (f *FungalBoss) determineAttack() {
