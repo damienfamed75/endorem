@@ -51,7 +51,7 @@ func (s *TestingScene) Preload() {
 
 	// s.player.Body.AddGround(*s.ground...)
 	s.camera = common.NewEndoCamera(s.player.Collision)
-	s.camera.Zoom = 1
+	s.camera.Zoom = 2
 
 	// Add the player to the world space.
 	s.world.Add(*s.player.Space...)

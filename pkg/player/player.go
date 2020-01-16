@@ -180,13 +180,13 @@ func (p *Player) movePlayer() {
 
 	// Controller Events
 	// TODO For simplicity in testing the velocity is the maxSpeed of X
-	if r.IsKeyDown(r.KeyD) {
+	if r.IsKeyDown(r.KeyRight) {
 		p.Body.Velocity.X += float32(p.maxSpeedX)
 		// p.Rigidbody.Velocity.X += float32(p.maxSpeedX)
 		p.Facing = common.Right
 		p.state = common.StateRight
 	}
-	if r.IsKeyDown(r.KeyA) {
+	if r.IsKeyDown(r.KeyLeft) {
 		p.Body.Velocity.X -= float32(p.maxSpeedX)
 		// p.Rigidbody.Velocity.X -= float32(p.maxSpeedX)
 		p.Facing = common.Left
@@ -217,13 +217,13 @@ func (p *Player) movePlayer() {
 }
 
 func (p *Player) playerJump() {
-	if r.IsKeyPressed(r.KeyW) && p.Body.OnGround() {
+	if r.IsKeyPressed(r.KeyUp) && p.Body.OnGround() {
 		// fmt.Println("JUMP!")
 		// if r.IsKeyPressed(r.KeyW) && p.OnGround() {
 		p.Body.Velocity.Y = p.jumpHeight
 		// p.Rigidbody.Velocity.Y = p.jumpHeight
 		p.madeJump = true
-	} else if r.IsKeyPressed(r.KeyW) && p.madeJump {
+	} else if r.IsKeyPressed(r.KeyUp) && p.madeJump {
 		p.Body.Velocity.Y = p.jumpHeight
 		// p.Rigidbody.Velocity.Y = p.jumpHeight
 		p.madeJump = false
