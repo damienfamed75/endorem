@@ -21,7 +21,7 @@ type MenuScene struct {
 }
 
 //Preload is used to load in assets and entities
-func (s *MenuScene) Preload() {
+func (s *MenuScene) Preload(func()) {
 	s.world = resolv.NewSpace()
 	s.ground = resolv.NewSpace()
 	s.startRun = resolv.NewSpace()

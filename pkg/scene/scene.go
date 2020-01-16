@@ -1,7 +1,7 @@
 package scene
 
 type Scene interface {
-	Preload()
+	Preload(func())
 	Update(float32)
 	Draw()
 	Unload()

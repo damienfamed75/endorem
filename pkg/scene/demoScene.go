@@ -34,11 +34,17 @@ type DemoScene struct {
 	world  *physics.Space
 	fungus *enemy.FungalBoss
 
+	restart func()
+
 	camera *common.EndoCamera
 }
 
+var (
+	demoSpawn = r.NewVector2(200, 50)
+)
+
 // Preload is used to load in assets and entities
-func (d *DemoScene) Preload() {
+func (d *DemoScene) Preload(restart func()) {
 	r.InitAudioDevice()
 
 	d.music = r.LoadMusicStream("assets/sounds/Broke_For_Free_-_01_-_Night_Owl.mp3")
@@ -83,7 +89,7 @@ func (d *DemoScene) Preload() {
 	d.world.Add(*d.ground...)
 
 	// Create player & camera
-	d.player = player.NewPlayer(200, 50, func() {}, d.ground)
+	d.player = player.NewPlayer(int(demoSpawn.X), int(demoSpawn.Y), func() {}, d.ground)
 	d.player.AddTags(common.TagPlayer)
 
 	d.camera = common.NewEndoCamera(d.player.Collision)
@@ -126,6 +132,13 @@ func (d *DemoScene) Update(dt float32) {
 	// r.CloseWindow()
 	// exit
 	// }
+
+	if d.player.IsDead {
+		d.music.StopStream()
+		d.fungus.Health = d.fungus.MaxHealth
+
+		d.player = player.NewPlayer(int(demoSpawn.X), int(demoSpawn.Y), func() {}, d.ground)
+	}
 
 	d.player.Collision.X = int32(d.player.Position().X)
 	d.player.Collision.Y = int32(d.player.Position().Y)

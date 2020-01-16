@@ -205,6 +205,7 @@ func (p *Player) TakeDamage(dir float32) {
 		if p.Health <= 0 {
 			p.deathFunc()
 			p.state = common.StateDead // :c
+			p.IsDead = true
 		}
 	}
 }

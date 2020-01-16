@@ -37,17 +37,21 @@ func (g *Game) FindScene(sceneName string) (scene.Scene, int) {
 	return nil, -1
 }
 
+func (g *Game) Restart() {
+	g.SwitchScene(g.CurrentScene)
+}
+
 func (g *Game) SwitchScene(index int) {
 	g.Scenes[g.CurrentScene].Unload() // Unload the current scene.
 	// Debug log to unload scene.
 
-	g.Scenes[index].Preload() // Preload new scene.
-	g.CurrentScene = index    // Switch the current scene to given.
+	g.Scenes[index].Preload(g.Restart) // Preload new scene.
+	g.CurrentScene = index             // Switch the current scene to given.
 }
 
 func (g *Game) Start(defaultScene string) {
 	if s, i := g.FindScene(defaultScene); s != nil {
-		s.Preload()
+		s.Preload(g.Restart)
 		g.CurrentScene = i
 	}
 }

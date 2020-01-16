@@ -29,7 +29,7 @@ type LevelOne struct {
 	overviewCam r.Camera2D
 }
 
-func (l *LevelOne) Preload() {
+func (l *LevelOne) Preload(func()) {
 	l.overviewCam = r.Camera2D{
 		Rotation: 0,
 		Zoom:     0.35,

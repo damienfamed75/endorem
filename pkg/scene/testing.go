@@ -29,7 +29,7 @@ type TestingScene struct {
 }
 
 // Preload is used to load in assets and entities
-func (s *TestingScene) Preload() {
+func (s *TestingScene) Preload(func()) {
 	s.ground = physics.NewSpace()
 	s.enemies = physics.NewSpace()
 	s.world = physics.NewSpace()
