@@ -96,6 +96,8 @@ func NewFungalBoss(x, y int, world *physics.Space) *FungalBoss {
 	)
 	f.Hurtbox.AddTags(TagHurtbox)
 
+	f.HitboxAOE = &resolv.Rectangle{}
+
 	f.spores = NewSpores(int32(x), int32(y))
 	f.spores.AddTags(HitboxData)
 
@@ -109,6 +111,7 @@ func NewFungalBoss(x, y int, world *physics.Space) *FungalBoss {
 // Update FungalBosses every frame, checking attack and validating rigidbody collision
 func (f *FungalBoss) Update(dt float32) {
 	f.Ase.Update(dt)
+	f.aoeAse.Update(dt)
 	f.determineAttack()
 
 	// Movement of spores
@@ -120,7 +123,7 @@ func (f *FungalBoss) determineAttack() {
 	//TODO determine when certain attacks will happen
 	// attack 1 must not have happened recently (spores still falling)
 	// attack 2 must be in range
-	//attack 1 - standard shooting of fungal spore, they will drop
+	// attack 1 - standard shooting of fungal spore, they will drop
 	// down with time
 	f.sporeAttack()
 
@@ -184,6 +187,9 @@ func (f *FungalBoss) Draw() {
 	)
 
 	f.spores.Draw()
+
+	// Draw aoe attack
+
 	// Draw debug messages about the entity's current information
 	f.debugDraw()
 }

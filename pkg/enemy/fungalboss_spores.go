@@ -14,10 +14,8 @@ type Spores struct {
 	Ase    *aseprite.File
 	Sprite r.Texture2D
 
-	sporeHeight int
-	sporeWidth  int
-	sporeMoveX  float64
-	Speed       int32
+	sporeMoveX float64
+	Speed      int32
 
 	rowStart  int32
 	rowHeight int32 // Spawn height of spores
@@ -29,13 +27,11 @@ type Spores struct {
 
 func setupSpores() *Spores {
 	return &Spores{
-		Sprite:      r.LoadTexture("assets/spore.png"),
-		sporeHeight: 10,
-		sporeWidth:  10,
-		Speed:       -3,
-		rowAmt:      5,
-		rowApart:    80,
-		Space:       resolv.NewSpace(),
+		Sprite:   r.LoadTexture("assets/spore.png"),
+		Speed:    -3,
+		rowAmt:   5,
+		rowApart: 80,
+		Space:    resolv.NewSpace(),
 	}
 }
 
@@ -114,11 +110,12 @@ func (s *Spores) Draw() {
 }
 
 func (s *Spores) debugDraw() {
+	w, h := s.Ase.FrameBoundaries().Width, s.Ase.FrameBoundaries().Height
 	for _, shape := range *s.Space {
 		x, y := shape.GetXY()
 		r.DrawRectangleLines(
 			int(x), int(y),
-			int(s.sporeWidth), int(s.sporeHeight),
+			int(w), int(h),
 			r.Red,
 		)
 	}
