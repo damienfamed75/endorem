@@ -174,7 +174,7 @@ func (m *Mask) Draw() {
 	// srcX, srcY resemble the X and Y pixels where the active sprite is.
 	srcX, srcY = m.shotAse.FrameBoundaries().X, m.shotAse.FrameBoundaries().Y
 	w, h = m.shotAse.FrameBoundaries().Width, m.shotAse.FrameBoundaries().Height
-	// log.Print(srcX, srcY)
+
 	src = r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
 	for _, shape := range *m.Hitbox {
 		x, y := shape.GetXY()

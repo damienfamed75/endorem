@@ -1,20 +1,23 @@
 package enemy
 
 import (
+	"log"
 	"math"
 	"math/rand"
 
 	"github.com/SolarLune/resolv/resolv"
+	"github.com/damienfamed75/aseprite"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
 type Spores struct {
-	Sprite      r.Texture2D
+	Ase    *aseprite.File
+	Sprite r.Texture2D
+
 	sporeHeight int
 	sporeWidth  int
 	sporeMoveX  float64
-
-	Speed int32
+	Speed       int32
 
 	rowStart  int32
 	rowHeight int32 // Spawn height of spores
@@ -26,7 +29,7 @@ type Spores struct {
 
 func setupSpores() *Spores {
 	return &Spores{
-		Sprite:      r.LoadTexture("assets/playerDuck.png"),
+		Sprite:      r.LoadTexture("assets/spore.png"),
 		sporeHeight: 10,
 		sporeWidth:  10,
 		Speed:       -3,
@@ -38,9 +41,17 @@ func setupSpores() *Spores {
 
 func NewSpores(bossX, bossY int32) *Spores {
 	s := setupSpores()
+	var err error
+
+	s.Ase, err = aseprite.Open("assets/spore.json")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	s.rowStart = bossX
 	s.rowHeight = bossY - 300 // rows start 300 pixels above boss
+
+	s.Ase.Play("fire")
 
 	return s
 }
@@ -69,7 +80,9 @@ func (s *Spores) CreateRow() {
 }
 
 // Update the position of each spore in space
-func (s *Spores) Update() {
+func (s *Spores) Update(dt float32) {
+	s.Ase.Update(dt)
+
 	s.sporeMoveX += 0.5
 	// Updates the position of each indiviudal spore in Space
 	for _, shape := range *s.Space {
@@ -83,7 +96,19 @@ func (s *Spores) Update() {
 }
 
 func (s *Spores) Draw() {
+	// srcX, srcY resemble the X and Y pixels where the active sprite is.
+	srcX, srcY := s.Ase.FrameBoundaries().X, s.Ase.FrameBoundaries().Y
+	w, h := s.Ase.FrameBoundaries().Width, s.Ase.FrameBoundaries().Height
 
+	src := r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
+	for _, shape := range *s.Space {
+		x, y := shape.GetXY()
+		dest := r.NewRectangle(float32(x), float32(y), float32(w), float32(h))
+
+		r.DrawTexturePro(
+			s.Sprite, src, dest, r.NewVector2(0, 0), 0, r.White,
+		)
+	}
 	// To check moving hitboxes of spores
 	s.debugDraw()
 }
