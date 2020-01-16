@@ -106,7 +106,7 @@ func (s *TestingScene) Update(dt float32) {
 			}
 
 			if s.player.Collider().Overlaps(t.Body.Collider()) {
-				s.player.TakeDamage()
+				s.player.TakeDamage(1)
 			}
 		case *enemy.Basic: // Hurtbox
 			// If the hurtbox is colliding a player hitbox then take damage.

@@ -67,10 +67,7 @@ func (b *Body) AddGround(ground ...Shape) {
 	b.ground.Add(ground...)
 }
 
-func (b *Body) Update(dt float32) {
-	// Add default gravity effect on velocity.
-	b.Velocity.Y += b.gravity * dt
-
+func (b *Body) speedCheck() {
 	// Cap player movement speed.
 	if b.Velocity.X > b.maxSpeed.X {
 		b.Velocity.X = b.maxSpeed.X
@@ -85,11 +82,11 @@ func (b *Body) Update(dt float32) {
 	if b.Velocity.Y < -b.maxSpeed.Y {
 		b.Velocity.Y = -b.maxSpeed.Y
 	}
+}
 
+func (b *Body) ResolveForces() {
 	tmpXRec := b.collision.Rectangle.Move(b.Velocity.X, 0)
 	tmpYRec := b.collision.Rectangle.Move(0, b.Velocity.Y)
-	// tmpXRec := b.Move(b.Velocity.X, 0)
-	// tmpYRec := b.Move(0, b.Velocity.Y)
 
 	// Limit the player to touching one object on each axis at a time.
 	// This means that numbers won't get messed up when touching two
@@ -125,17 +122,26 @@ func (b *Body) Update(dt float32) {
 				}
 			}
 		}
-
-		// If the player's Y velocity is up and is greater than the default
-		// gravity effect of the player then it should be considered on the ground.
-		if b.Velocity.Y < -(b.gravity * dt) {
-			b.onGround = false
-		}
-
 	}
 
 	b.collision.Rectangle.X += b.Velocity.X
 	b.collision.Rectangle.Y += b.Velocity.Y
+}
+
+func (b *Body) Update(dt float32) {
+	// Add default gravity effect on velocity.
+	b.Velocity.Y += b.gravity * dt
+
+	b.speedCheck()
+
+	// If the player's Y velocity is up and is greater than the default
+	// gravity effect of the player then it should be considered on the ground.
+	if b.Velocity.Y < -(b.gravity * dt) {
+		b.onGround = false
+	}
+
+	b.ResolveForces()
+
 	// b.Rectangle.X += b.Velocity.X
 	// b.Rectangle.Y += b.Velocity.Y
 }

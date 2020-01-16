@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/damienfamed75/endorem/pkg/common"
+	"github.com/damienfamed75/endorem/pkg/enemy"
 	"github.com/damienfamed75/endorem/pkg/physics"
 	"github.com/damienfamed75/endorem/pkg/player"
 	"github.com/damienfamed75/endorem/pkg/testing"
@@ -22,11 +23,15 @@ type DemoScene struct {
 
 	world *physics.Space
 
+	slime *enemy.Slime
+
 	camera *common.EndoCamera
 }
 
 // Preload is used to load in assets and entities
 func (d *DemoScene) Preload() {
+	r.InitAudioDevice()
+
 	d.ground = physics.NewSpace()
 	d.world = physics.NewSpace()
 
@@ -63,6 +68,7 @@ func (d *DemoScene) Preload() {
 	d.world.Add(*d.player.Space...)
 
 	// Add enemies and boss to space
+	// d.slime = enemy.NewSlime(400, 50, d.world)
 
 	// Add enemies and boss to space
 
@@ -72,6 +78,19 @@ func (d *DemoScene) Preload() {
 func (d *DemoScene) Update(dt float32) {
 	// Update the camera and player.
 	d.camera.Update(d.player.Update(dt))
+	// d.slime.Update(dt)
+
+	// if d.slime.Overlaps(d.player.RayRec()) {
+	// 	// overlap := d.slime.RayRec().GetOverlapRec(d.player.RayRec())
+	// 	var dir float32
+	// 	if d.player.RayRec().X > d.slime.RayRec().X {
+	// 		dir = 1
+	// 	} else {
+	// 		dir = -1
+	// 	}
+
+	// 	d.player.TakeDamage(dir)
+	// }
 }
 
 // Draw frames
@@ -84,6 +103,7 @@ func (d *DemoScene) Draw() {
 	r.DrawTexture(d.Foreground, 0, 0, r.White)
 
 	d.player.Draw()
+	// d.slime.Draw()
 
 	d.debugDraw()
 	// Draw all ground elements

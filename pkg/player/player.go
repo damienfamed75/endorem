@@ -1,6 +1,7 @@
 package player
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 type Player struct {
 	Ase    *aseprite.File
 	Sprite r.Texture2D
+	Color  r.Color
 
 	MaskObj *Mask
 
@@ -27,12 +29,14 @@ type Player struct {
 	Facing    common.Direction
 	*physics.Body
 
-	maxSpeedX  int32
-	maxSpeedY  int32
-	SpeedX     float32
-	SpeedY     float32
-	jumpHeight float32
-	madeJump   bool
+	damagePushback float32
+	maxSpeedX      int32
+	maxSpeedY      int32
+	SpeedX         float32
+	SpeedY         float32
+	jumpHeight     float32
+	madeJump       bool
+	takingDamage   bool
 
 	isAttacking     bool
 	isCrouched      bool
@@ -42,6 +46,10 @@ type Player struct {
 	attackTimer     time.Duration
 	invincibleTimer time.Duration
 	state           common.State
+
+	soundHurt       *r.Sound
+	soundJump       *r.Sound
+	soundDoubleJump *r.Sound
 
 	*Inventory
 }
@@ -55,6 +63,7 @@ func setupPlayer() *Player {
 		Health:          3,
 		maxSpeedX:       4,
 		maxSpeedY:       8,
+		damagePushback:  20,
 		jumpHeight:      -6,
 		madeJump:        false,
 		healthBefore:    time.Now(),
@@ -75,6 +84,14 @@ func NewPlayer(x, y int, deathFunc func(), ground *physics.Space) *Player {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	p.soundHurt = r.LoadSound("assets/sounds/Take_Damage_3.wav")
+	p.soundJump = r.LoadSound("assets/sounds/Dry_Sword_Swing.wav")
+	p.soundDoubleJump = r.LoadSound("assets/sounds/Dry_Sword_Swing.wav")
+
+	p.soundJump.SetVolume(0.5)
+	p.soundDoubleJump.SetVolume(0.5)
+	p.soundDoubleJump.SetPitch(2.0)
 
 	// Queues a default animation
 	p.Ase.Play("idle")
@@ -108,6 +125,21 @@ func NewPlayer(x, y int, deathFunc func(), ground *physics.Space) *Player {
 func (p *Player) Update(dt float32) r.Vector2 {
 	p.Ase.Update(dt)
 	p.state = common.StateIdle
+
+	if p.MaskObj.Ase.IsPlaying("attack") && !p.Ase.IsPlaying("attack") {
+		fmt.Println(p.Ase.CurrentAnimation.Name)
+		p.Ase.Play("attack")
+	} else {
+		if !p.Ase.IsPlaying("damage") && !p.Ase.IsPlaying("run") {
+			p.Ase.Play("idle")
+		}
+	}
+
+	if p.soundHurt.IsPlaying() {
+		p.Color = r.Red
+	} else {
+		p.Color = r.White
+	}
 
 	p.movePlayer()
 
@@ -146,19 +178,24 @@ func (p *Player) Draw() {
 	dest := r.NewRectangle(float32(p.Position().X), float32(p.Position().Y), float32(w), float32(h))
 
 	r.DrawTexturePro(
-		p.Sprite, src, dest, r.NewVector2(0, 0), 0, r.White,
+		p.Sprite, src, dest, r.NewVector2(0, 0), 0, p.Color,
 	)
 
 	p.debugDraw()
 }
 
-func (p *Player) TakeDamage() {
+func (p *Player) TakeDamage(dir float32) {
 	// The player has their invincibility frames, and if they have run out of
 	// time of that then they can take more damage.
 	if time.Since(p.healthBefore) >= time.Millisecond*p.invincibleTimer {
 		p.healthBefore = time.Now()
 
 		p.Health--
+		r.PlaySound(p.soundHurt)
+		p.Velocity.X = p.damagePushback * dir
+		p.Body.ResolveForces()
+
+		p.Ase.Play("damage")
 		if p.Health <= 0 {
 			p.deathFunc()
 			p.state = common.StateDead // :c
@@ -183,7 +220,9 @@ func (p *Player) movePlayer() {
 		p.Ase.Play("run")
 	} else {
 		p.Body.Velocity.X = 0
-		p.Ase.Play("idle")
+		if !p.Ase.IsPlaying("damage") && !p.Ase.IsPlaying("attack") {
+			p.Ase.Play("idle")
+		}
 	}
 
 	// Controller Events
@@ -231,10 +270,12 @@ func (p *Player) playerJump() {
 		p.Body.Velocity.Y = p.jumpHeight
 		// p.Rigidbody.Velocity.Y = p.jumpHeight
 		p.madeJump = true
+		r.PlaySound(p.soundJump)
 	} else if r.IsKeyPressed(r.KeyUp) && p.madeJump {
 		p.Body.Velocity.Y = p.jumpHeight
 		// p.Rigidbody.Velocity.Y = p.jumpHeight
 		p.madeJump = false
+		r.PlaySound(p.soundDoubleJump)
 	}
 }
 func (p *Player) checkAttack() {
@@ -257,20 +298,20 @@ func (p *Player) checkAttack() {
 func (p *Player) attack() {
 	// Based on the direction the player is facing, set the position of the
 	// hitbox in front of the player.
-	if p.Facing == common.Left {
-		p.Hitbox.SetPosition(r.NewVector2(
-			p.Body.Position().X-(p.Hitbox.Width/2),
-			p.Body.Position().Y+p.Body.Collider().Height/3.0,
-		))
-	} else {
-		p.Hitbox.SetPosition(r.NewVector2(
-			p.Body.Position().X,
-			p.Body.Position().Y+p.Body.Collider().Height/3.0,
-		))
-	}
+	// if p.Facing == common.Left {
+	// 	p.Hitbox.SetPosition(r.NewVector2(
+	// 		p.Body.Position().X-(p.Hitbox.Width/2),
+	// 		p.Body.Position().Y+p.Body.Collider().Height/3.0,
+	// 	))
+	// } else {
+	// 	p.Hitbox.SetPosition(r.NewVector2(
+	// 		p.Body.Position().X,
+	// 		p.Body.Position().Y+p.Body.Collider().Height/3.0,
+	// 	))
+	// }
 
-	p.attackBefore = time.Now() // Reset timerS
-	// p.Add(p.Hitbox)
-	p.Body.Add(p.Hitbox)
-	p.isAttacking = true
+	// p.attackBefore = time.Now() // Reset timerS
+	// // p.Add(p.Hitbox)
+	// p.Body.Add(p.Hitbox)
+	// p.isAttacking = true
 }
