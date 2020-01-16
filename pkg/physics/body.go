@@ -9,24 +9,32 @@ import (
 type Body struct {
 	Velocity r.Vector2
 
-	onGround bool
-	gravity  float32
-	maxSpeed r.Vector2
-	ground   *Space
+	onGround  bool
+	gravity   float32
+	maxSpeed  r.Vector2
+	ground    *Space
+	collision *Rectangle
 	// ground   []r.Rectangle
 
-	r.Rectangle
+	*Space
+	// *Rectangle
+	// r.Rectangle
 }
 
 func NewBody(x, y, w, h, maxSpdX, maxSpdY float32) *Body {
 	b := &Body{
-		Velocity: r.NewVector2(0, 0),
-		maxSpeed: r.NewVector2(maxSpdX, maxSpdY),
-		gravity:  common.GlobalConfig.Game.Gravity * 40,
-		ground:   NewSpace(),
+		Velocity:  r.NewVector2(0, 0),
+		maxSpeed:  r.NewVector2(maxSpdX, maxSpdY),
+		gravity:   common.GlobalConfig.Game.Gravity * 40,
+		ground:    NewSpace(),
+		Space:     NewSpace(),
+		collision: NewRectangle(x, y, w, h),
 	}
 
-	b.Rectangle = r.NewRectangle(x, y, w, h)
+	b.Space.Add(b.collision)
+	// b.Rectangle = NewRectangle(x, y, w, h)
+
+	// b.Rectangle = r.NewRectangle(x, y, w, h)
 
 	return b
 }
@@ -37,6 +45,14 @@ func (b *Body) SetGravity(g float32) {
 
 func (b *Body) OnGround() bool {
 	return b.onGround
+}
+
+func (b *Body) Collider() r.Rectangle {
+	return b.collision.Rectangle
+}
+
+func (b *Body) Position() r.Vector2 {
+	return b.collision.Rectangle.Position()
 }
 
 func (b *Body) SetGround(ground *Space) {
@@ -70,8 +86,10 @@ func (b *Body) Update(dt float32) {
 		b.Velocity.Y = -b.maxSpeed.Y
 	}
 
-	tmpXRec := b.Move(b.Velocity.X, 0)
-	tmpYRec := b.Move(0, b.Velocity.Y)
+	tmpXRec := b.collision.Rectangle.Move(b.Velocity.X, 0)
+	tmpYRec := b.collision.Rectangle.Move(0, b.Velocity.Y)
+	// tmpXRec := b.Move(b.Velocity.X, 0)
+	// tmpYRec := b.Move(0, b.Velocity.Y)
 
 	// Limit the player to touching one object on each axis at a time.
 	// This means that numbers won't get messed up when touching two
@@ -82,7 +100,7 @@ func (b *Body) Update(dt float32) {
 		// If the player hasn't collided with anything on the x-axis yet.
 		if !colx {
 			if (*b.ground)[i].Overlaps(tmpXRec) {
-				overlap := (*b.ground)[i].GetOverlapRec(tmpXRec)
+				overlap := (*b.ground)[i].RayRec().GetOverlapRec(tmpXRec)
 				colx = true
 
 				if b.Velocity.X > 0 {
@@ -96,7 +114,7 @@ func (b *Body) Update(dt float32) {
 		// If the player hasn't collided with anything on the y-axis yet.
 		if !coly {
 			if (*b.ground)[i].Overlaps(tmpYRec) {
-				overlap := (*b.ground)[i].GetOverlapRec(tmpYRec)
+				overlap := (*b.ground)[i].RayRec().GetOverlapRec(tmpYRec)
 				coly = true
 				b.onGround = true
 
@@ -116,6 +134,8 @@ func (b *Body) Update(dt float32) {
 
 	}
 
-	b.Rectangle.X += b.Velocity.X
-	b.Rectangle.Y += b.Velocity.Y
+	b.collision.Rectangle.X += b.Velocity.X
+	b.collision.Rectangle.Y += b.Velocity.Y
+	// b.Rectangle.X += b.Velocity.X
+	// b.Rectangle.Y += b.Velocity.Y
 }

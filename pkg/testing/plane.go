@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/physics"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
@@ -23,14 +22,7 @@ type Plane struct {
 // NewPlane returns the default shape of the testing plane which is meant for an
 // 800x600 display.
 func NewPlane(x, y, w, h int32, color r.Color) *Plane {
-	planeSpace := resolv.NewSpace()
-
-	planeSpace.Add(
-		//resolv.NewRectangle(0, 500, 800, 100),
-		resolv.NewRectangle(x, y, w, h),
-	)
 	return &Plane{
-		// Space:     planeSpace,
 		Color:     color,
 		Rectangle: physics.NewRectangle(float32(x), float32(y), float32(w), float32(h)),
 

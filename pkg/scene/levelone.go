@@ -52,7 +52,7 @@ func (l *LevelOne) Preload() {
 	// +1 to Y so player doesn't shoot up the ceiling collider.
 	x, y := (spawnRoom.X * mapScale), ((spawnRoom.Y + 1) * mapScale)
 
-	l.player = player.NewPlayer(x, y, func() {}, resolv.NewSpace())
+	l.player = player.NewPlayer(x, y, func() {}, physics.NewSpace())
 	l.camera = common.NewEndoCamera(l.player.Collision)
 
 	fmt.Printf("player inventory before [%v]\n", l.player.Inventory)
@@ -110,6 +110,7 @@ func (l *LevelOne) Preload() {
 	})
 
 	l.player.Body.AddGround(*l.ground...)
+	// l.player.Body.AddGround(l.ground)
 	// l.world.Add(l.player)
 }
 

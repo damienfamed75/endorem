@@ -49,6 +49,10 @@ func (r *Rectangle) HasTags(tags ...string) bool {
 	return hasTags
 }
 
+func (r *Rectangle) RayRec() r.Rectangle {
+	return r.Rectangle
+}
+
 func (r *Rectangle) AddTags(tags ...string) {
 	r.tags = append(r.tags, tags...)
 }

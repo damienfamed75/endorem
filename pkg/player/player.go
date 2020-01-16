@@ -16,12 +16,12 @@ type Player struct {
 	SpriteStand r.Texture2D
 	SpriteDuck  r.Texture2D
 	Collision   *resolv.Rectangle
-	Hitbox      *resolv.Rectangle
+	Hitbox      *physics.Rectangle
 	Health      int
 	MaxHealth   int
 	IsDead      bool
 	Facing      common.Direction
-	Body        *physics.Body
+	*physics.Body
 
 	maxSpeedX  int32
 	maxSpeedY  int32
@@ -30,7 +30,7 @@ type Player struct {
 	jumpHeight float32
 	madeJump   bool
 
-	Ground *resolv.Space
+	// Ground *resolv.Space
 
 	isAttacking     bool
 	isCrouched      bool
@@ -43,7 +43,7 @@ type Player struct {
 
 	*Inventory
 	//*resolv.Space
-	*common.Rigidbody
+	// *common.Rigidbody
 }
 
 func setupPlayer() *Player {
@@ -55,8 +55,8 @@ func setupPlayer() *Player {
 		//Space:           resolv.NewSpace(),
 		Facing:          common.Right,
 		Health:          3,
-		maxSpeedX:       2,
-		maxSpeedY:       6,
+		maxSpeedX:       4,
+		maxSpeedY:       8,
 		jumpHeight:      -6,
 		madeJump:        false,
 		healthBefore:    time.Now(),
@@ -69,9 +69,8 @@ func setupPlayer() *Player {
 
 // NewPlayer creates a player struct, loading the player sprite texture and generates
 // the collision space for the player
-func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
+func NewPlayer(x, y int, deathFunc func(), ground *physics.Space) *Player {
 	p := setupPlayer()
-	p.Ground = ground
 	p.MaskObj.setMovePattern("test")
 	// Create Mask to follow player
 	// Set the death function that'll be called when the player dies.
@@ -80,7 +79,7 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 	p.Body = physics.NewBody(
 		float32(x), float32(y),
 		float32(p.SpriteStand.Width), float32(p.SpriteStand.Height),
-		20, 60,
+		float32(p.maxSpeedX), float32(p.maxSpeedY),
 	)
 
 	// Setup collision and trigger boxes for the player.
@@ -89,28 +88,19 @@ func NewPlayer(x, y int, deathFunc func(), ground *resolv.Space) *Player {
 		p.SpriteStand.Width, p.SpriteStand.Height,
 	)
 	p.Collision.AddTags(common.TagCollision)
-	p.Hitbox = resolv.NewRectangle(
-		0, 0, p.SpriteStand.Height, p.SpriteStand.Width,
+	p.Hitbox = physics.NewRectangle(
+		0, 0, float32(p.SpriteStand.Height), float32(p.SpriteStand.Width),
 	)
 
-	p.Rigidbody = common.NewRigidbody(
-		int32(x), int32(y),
-		p.maxSpeedX, p.maxSpeedY, p.Ground,
-		p.Collision,
-	)
 	// Set all spaces to have self referencial data.
 	p.SetData(p)
-	p.AddTags(common.TagPlayer)
-	// Set the hurtbox to store differing data.
-	p.Collision.SetData(HurtboxData)
-	p.Collision.AddTags(TagHurtbox)
+
 	p.Hitbox.AddTags(TagHitbox)
 
 	// Add to collision boxes to player space.
-	p.Add(p.Collision)
+	p.Add(p.Hitbox)
 
-	// Saves the ground
-	// for collision detection with player
+	p.AddGround(*ground...)
 
 	return p
 }
@@ -122,8 +112,8 @@ func (p *Player) Update(dt float32) r.Vector2 {
 	p.movePlayer()
 
 	maskTar := r.Vector2{
-		X: float32(p.GetX()),
-		Y: float32(p.GetY()),
+		X: float32(p.Position().X),
+		Y: float32(p.Position().Y),
 	}
 	p.MaskObj.checkDirection(maskTar, p.Facing)
 	p.MaskObj.Update()
@@ -132,7 +122,7 @@ func (p *Player) Update(dt float32) r.Vector2 {
 
 	// p.Rigidbody.Update(dt)
 	p.Body.Update(dt)
-	return r.NewVector2(float32(p.Body.X), float32(p.Body.Y))
+	return r.NewVector2(float32(p.Body.Position().X), float32(p.Body.Position().Y))
 	// return r.NewVector2(float32(p.Collision.X), float32(p.Collision.Y))
 }
 
@@ -141,7 +131,7 @@ func (p *Player) Draw() {
 	p.MaskObj.Draw()
 
 	if p.isCrouched {
-		r.DrawTexture(p.SpriteDuck, int(p.GetX()), int(p.GetY()), r.White)
+		r.DrawTexture(p.SpriteDuck, int(p.Position().X), int(p.Position().Y), r.White)
 	} else {
 		r.DrawTexture(
 			p.SpriteStand,
@@ -177,10 +167,10 @@ func (p *Player) movePlayer() {
 	// accel := 0.5 + friction
 
 	// Slows down player movement after key is released
-	if p.Rigidbody.Velocity.X > friction {
+	if p.Velocity.X > friction {
 		p.Body.Velocity.X -= friction
 		// p.Rigidbody.Velocity.X -= friction
-	} else if p.Rigidbody.Velocity.X < -friction {
+	} else if p.Velocity.X < -friction {
 		p.Body.Velocity.X += friction
 		// p.Rigidbody.Velocity.X += friction
 	} else {
@@ -251,7 +241,7 @@ func (p *Player) checkAttack() {
 		p.attack()
 	} else {
 		// Remove hurtbox from enemy space.
-		p.Remove(p.Hitbox)
+		p.Body.Remove(p.Hitbox)
 		p.isAttacking = false
 	}
 }
@@ -260,12 +250,19 @@ func (p *Player) attack() {
 	// Based on the direction the player is facing, set the position of the
 	// hitbox in front of the player.
 	if p.Facing == common.Left {
-		p.Hitbox.SetXY(p.Collision.X-(p.Hitbox.W/2), p.Collision.Y+p.Collision.H/3.0)
+		p.Hitbox.SetPosition(r.NewVector2(
+			p.Body.Position().X-(p.Hitbox.Width/2),
+			p.Body.Position().Y+p.Body.Collider().Height/3.0,
+		))
 	} else {
-		p.Hitbox.SetXY(p.Collision.X, p.Collision.Y+p.Collision.H/3.0)
+		p.Hitbox.SetPosition(r.NewVector2(
+			p.Body.Position().X,
+			p.Body.Position().Y+p.Body.Collider().Height/3.0,
+		))
 	}
 
 	p.attackBefore = time.Now() // Reset timerS
-	p.Add(p.Hitbox)
+	// p.Add(p.Hitbox)
+	p.Body.Add(p.Hitbox)
 	p.isAttacking = true
 }

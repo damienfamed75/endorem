@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/damienfamed75/endorem/pkg/common"
+	"github.com/damienfamed75/endorem/pkg/physics"
 
 	"github.com/SolarLune/resolv/resolv"
 	r "github.com/lachee/raylib-goplus/raylib"
@@ -17,10 +18,10 @@ type Slime struct {
 	Health int
 	IsDead bool
 
-	player *resolv.Space
-	ground *resolv.Space
+	player physics.Shape
+	ground *physics.Space
 
-	onGround         bool
+	// onGround         bool
 	attacking        bool
 	travelSpeed      float32
 	attackSpeed      float32
@@ -40,7 +41,8 @@ type Slime struct {
 	invincibleTimer time.Duration
 	healthBefore    time.Time
 
-	*common.Rigidbody
+	*physics.Body
+	// *common.Rigidbody
 }
 
 func setupSlime() *Slime {
@@ -50,9 +52,9 @@ func setupSlime() *Slime {
 		attackDistance:   60,
 		gravity:          common.GlobalConfig.Game.Gravity,
 		jumpTimer:        1000,
-		travelSpeed:      1,
+		travelSpeed:      0.5,
 		attackSpeed:      4,
-		maxSpeedX:        8,
+		maxSpeedX:        6,
 		maxSpeedY:        6,
 		attackJumpHeight: -4,
 		travelJumpHeight: -4,
@@ -62,11 +64,11 @@ func setupSlime() *Slime {
 }
 
 // NewSlime creates a slime at the given position.
-func NewSlime(x, y int, world *resolv.Space) *Slime {
+func NewSlime(x, y int, world *physics.Space) *Slime {
 	s := setupSlime()
 
 	// Store the important spaces in the world.
-	s.player = world.FilterByTags(common.TagPlayer)
+	s.player = (*world.FilterByTags(common.TagPlayer))[0]
 	s.ground = world.FilterByTags(common.TagGround)
 
 	collision := resolv.NewRectangle(
@@ -74,11 +76,18 @@ func NewSlime(x, y int, world *resolv.Space) *Slime {
 	)
 	collision.AddTags(TagHurtbox, common.TagCollision)
 
-	s.Rigidbody = common.NewRigidbody(
-		int32(x), int32(y),
-		s.maxSpeedX, s.maxSpeedY, s.ground,
-		collision,
+	s.Body = physics.NewBody(
+		float32(x), float32(y),
+		float32(s.Sprite.Width), float32(s.Sprite.Height),
+		float32(s.maxSpeedX), float32(s.maxSpeedY),
 	)
+
+	s.Body.AddGround(*s.ground...)
+	// s.Rigidbody = common.NewRigidbody(
+	// 	int32(x), int32(y),
+	// 	s.maxSpeedX, s.maxSpeedY, s.ground,
+	// 	collision,
+	// )
 
 	s.SetData(s)
 
@@ -94,7 +103,7 @@ func (s *Slime) TakeDamage() {
 		s.Health--
 		if s.Health <= 0 {
 			s.IsDead = true
-			s.Clear()
+			// s.Clear()
 		}
 	}
 }
@@ -102,17 +111,22 @@ func (s *Slime) TakeDamage() {
 // Update gets called every frame and tells if the slime is going to
 // sit still, idle travel around, jump to the player, or attack.
 func (s *Slime) Update(dt float32) {
-	px, py := s.player.GetXY()
+	px, py := s.player.Position().X, s.player.Position().Y
 
 	dist := resolv.Distance(
-		s.GetX(), s.GetY(),
-		px, py,
+		int32(s.Position().X), int32(s.Position().Y),
+		// s.GetX(), s.GetY(),
+		int32(px), int32(py),
 	)
 
 	s.playerSeen = dist < common.GlobalConfig.Enemy.VisionDistance
 
 	if s.attacking {
 		s.attacking = !s.OnGround()
+	}
+
+	if s.OnGround() {
+		s.Body.Velocity.X = 0
 	}
 
 	if s.playerSeen {
@@ -126,11 +140,12 @@ func (s *Slime) Update(dt float32) {
 			s.followPlayer()
 		}
 	} else {
-		s.Rigidbody.Velocity.X = 0
+		s.Body.Velocity.X = 0
+		// s.Rigidbody.Velocity.X = 0
 	}
 
 	// Update the slime's position according to gravity and checks collisions
-	s.Rigidbody.Update(dt)
+	s.Body.Update(dt)
 }
 
 func (s *Slime) attack() {
@@ -139,7 +154,7 @@ func (s *Slime) attack() {
 
 	if !s.OnGround() && !s.attacking {
 		s.attacking = true
-		s.Rigidbody.Velocity.X = s.attackSpeed * s.getPlayerDirection()
+		s.Body.Velocity.X = s.attackSpeed * s.getPlayerDirection()
 	}
 }
 
@@ -148,16 +163,16 @@ func (s *Slime) followPlayer() {
 	s.jump(s.travelJumpHeight)
 
 	if !s.OnGround() && !s.attacking {
-		s.Rigidbody.Velocity.X = s.travelSpeed * s.getPlayerDirection()
+		s.Body.Velocity.X = s.travelSpeed * s.getPlayerDirection()
 	} else if !s.attacking {
-		s.Rigidbody.Velocity.X = 0
+		s.Body.Velocity.X = 0
 	}
 }
 
 func (s *Slime) getPlayerDirection() float32 {
-	px, _ := s.player.GetXY()
+	px := s.player.RayRec().Center().X
 	// if px > s.GetX() {
-	if px > s.GetX() {
+	if px > s.Position().X {
 		return 1
 	}
 
@@ -174,19 +189,17 @@ func (s *Slime) jump(height float32) bool {
 		s.jumpTimeBegin = time.Now()
 
 		// Set the vertical speed of the slime.
-		s.Rigidbody.Velocity.Y = height
-		// Update that the slime is not on the ground anymore.
-		s.onGround = false
+		s.Body.Velocity.Y = height
 	}
 
-	return !s.onGround
+	return !s.OnGround()
 }
 
 // Draw the sprite texture at the collision box coordinates.
 func (s *Slime) Draw() {
 	// sx, sy := s.GetXY()
 	// r.DrawTexture(s.Sprite, int(sx), int(sy), r.White)
-	r.DrawTexture(s.Sprite, int(s.GetX()), int(s.GetY()), r.White)
+	r.DrawTexture(s.Sprite, int(s.Position().X), int(s.Position().Y), r.White)
 
 	// Draw debug messages about the entity's current information.
 	s.debugDraw()
@@ -196,25 +209,25 @@ func (s *Slime) debugDraw() {
 	// Draw health.
 	r.DrawText(
 		"HP: "+strconv.Itoa(s.Health),
-		int(s.GetX()), int(s.GetY()-(s.Sprite.Width/2)), 10,
+		int(s.Position().X), int(int32(s.Position().Y)-(s.Sprite.Width/2)), 10,
 		r.White,
 	)
 
 	r.DrawText(
 		fmt.Sprintf("G[%v]", s.OnGround()),
-		int(s.GetX()), int(s.GetY()+(s.Sprite.Height)), 10,
+		int(s.Position().X), int(int32(s.Position().Y)+(s.Sprite.Height)), 10,
 		r.White,
 	)
 
 	r.DrawText(
 		fmt.Sprintf("V[%v,%v]", s.Velocity.X, s.Velocity.Y),
-		int(s.GetX()), int(s.GetY()+(s.Sprite.Height)+10), 10,
+		int(s.Position().X), int(int32(s.Position().Y)+(s.Sprite.Height)+10), 10,
 		r.White,
 	)
 
 	// Draw the collision box for debugging reasons.
 	r.DrawRectangleLines(
-		int(s.GetX()), int(s.GetY()),
+		int(s.Position().X), int(s.Position().Y),
 		int(s.Sprite.Width), int(s.Sprite.Height),
 		r.Red,
 	)

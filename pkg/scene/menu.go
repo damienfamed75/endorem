@@ -1,10 +1,9 @@
 package scene
 
 import (
-	"log"
-
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
+	"github.com/damienfamed75/endorem/pkg/physics"
 	"github.com/damienfamed75/endorem/pkg/player"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
@@ -48,13 +47,13 @@ func (s *MenuScene) Preload() {
 	// )
 
 	// Create player and camera
-	s.player = player.NewPlayer(200, 268, func() {}, s.ground)
+	s.player = player.NewPlayer(200, 268, func() {}, physics.NewSpace())
 	defaultZoom := common.GlobalConfig.Game.Camera.DefaultZoom
 	s.camera = r.Camera2D{
 		Zoom: defaultZoom,
 	}
 
-	s.world.Add(s.ground, s.startRun, s.exit, s.player)
+	// s.world.Add(s.ground, s.startRun, s.exit, s.player)
 }
 
 // Update frames
@@ -96,13 +95,13 @@ func (s *MenuScene) String() string {
 
 func (s *MenuScene) checkTransitions() {
 	// Transition Check
-	if s.player.IsColliding(s.exit) {
-		// ADD GAME OVER
-		log.Print("EXIT GAME")
-	}
+	// if s.player.IsColliding(s.exit) {
+	// 	// ADD GAME OVER
+	// 	log.Print("EXIT GAME")
+	// }
 
-	if s.player.IsColliding(s.startRun) {
-		//TRANSITION TO GAME START
-		log.Print("START RUN")
-	}
+	// if s.player.IsColliding(s.startRun) {
+	// 	//TRANSITION TO GAME START
+	// 	log.Print("START RUN")
+	// }
 }
