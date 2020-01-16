@@ -6,6 +6,7 @@ import (
 	"github.com/SolarLune/dngn"
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
+	"github.com/damienfamed75/endorem/pkg/physics"
 	"github.com/damienfamed75/endorem/pkg/player"
 	"github.com/damienfamed75/endorem/pkg/room"
 	"github.com/damienfamed75/endorem/pkg/testing"
@@ -17,10 +18,11 @@ var (
 )
 
 type LevelOne struct {
-	mapData     *dngn.Room
-	rooms       []room.RoomSpec
-	player      *player.Player
-	ground      *resolv.Space
+	mapData *dngn.Room
+	rooms   []room.RoomSpec
+	player  *player.Player
+	ground  *physics.Space
+	// ground      *resolv.Space
 	doors       *resolv.Space
 	world       *resolv.Space
 	camera      *common.EndoCamera
@@ -34,7 +36,7 @@ func (l *LevelOne) Preload() {
 	}
 
 	l.world = resolv.NewSpace()
-	l.ground = resolv.NewSpace()
+	l.ground = physics.NewSpace()
 	l.doors = resolv.NewSpace()
 
 	l.mapData, l.rooms = room.GenerateMap(1)
@@ -50,7 +52,7 @@ func (l *LevelOne) Preload() {
 	// +1 to Y so player doesn't shoot up the ceiling collider.
 	x, y := (spawnRoom.X * mapScale), ((spawnRoom.Y + 1) * mapScale)
 
-	l.player = player.NewPlayer(x, y, func() {}, l.ground)
+	l.player = player.NewPlayer(x, y, func() {}, physics.NewSpace())
 	l.camera = common.NewEndoCamera(l.player.Collision)
 
 	fmt.Printf("player inventory before [%v]\n", l.player.Inventory)
@@ -77,42 +79,44 @@ func (l *LevelOne) Preload() {
 			)
 		case room.Door: // Door
 			l.doors.Add(
-				testing.NewDoor(
-					int32((x*mapScale)+(mapScale/2)), int32(y*mapScale),
-					int32((x*mapScale)+(mapScale/2)), int32((y*mapScale)+mapScale),
-					r.Orange,
-				),
+			// testing.NewDoor(
+			// 	int32((x*mapScale)+(mapScale/2)), int32(y*mapScale),
+			// 	int32((x*mapScale)+(mapScale/2)), int32((y*mapScale)+mapScale),
+			// 	r.Orange,
+			// ),
 			)
 		case room.Hatch: // Hatches
 			l.doors.Add(
-				testing.NewPlane(
-					int32(x*mapScale), int32(y*mapScale),
-					int32(mapScale), int32(mapScale),
-					r.Gold,
-				),
+			// testing.NewPlane(
+			// 	int32(x*mapScale), int32(y*mapScale),
+			// 	int32(mapScale), int32(mapScale),
+			// 	r.Gold,
+			// ),
 			)
 		case room.FloatingPlatform1: // Floating Platform 1
 			l.ground.Add(
-				testing.NewSolidPlane(
-					int32(x*mapScale), int32(y*mapScale),
-					int32(mapScale), int32(mapScale),
-					r.GopherBlue,
-				),
+			// testing.NewSolidPlane(
+			// 	int32(x*mapScale), int32(y*mapScale),
+			// 	int32(mapScale), int32(mapScale),
+			// 	r.GopherBlue,
+			// ),
 			)
 		case room.FloatingPlatform2: // Floating Platform 2
 			l.ground.Add(
-				testing.NewSolidPlane(
-					int32(x*mapScale), int32(y*mapScale),
-					int32(mapScale), int32(mapScale),
-					r.SkyBlue,
-				),
+			// testing.NewSolidPlane(
+			// 	int32(x*mapScale), int32(y*mapScale),
+			// 	int32(mapScale), int32(mapScale),
+			// 	r.SkyBlue,
+			// ),
 			)
 		}
 
 		return false
 	})
 
-	l.world.Add(l.ground, l.player)
+	l.player.Body.AddGround(*l.ground...)
+	// l.player.Body.AddGround(l.ground)
+	// l.world.Add(l.player)
 }
 
 func (l *LevelOne) Update(dt float32) {

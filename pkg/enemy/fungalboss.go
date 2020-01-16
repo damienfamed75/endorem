@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/damienfamed75/endorem/pkg/common"
+	"github.com/damienfamed75/endorem/pkg/physics"
 
 	"github.com/SolarLune/resolv/resolv"
 	r "github.com/lachee/raylib-goplus/raylib"
@@ -23,8 +24,8 @@ type FungalBoss struct {
 	isDead  bool
 	Hurtbox *resolv.Rectangle
 
-	player *resolv.Space
-	ground *resolv.Space
+	player *physics.Space
+	ground *physics.Space
 
 	maxSpeedX int32
 	maxSpeedY int32
@@ -63,7 +64,7 @@ func setupFungalBoss() *FungalBoss {
 	}
 }
 
-func NewFungalBoss(x, y int, world *resolv.Space) *FungalBoss {
+func NewFungalBoss(x, y int, world *physics.Space) *FungalBoss {
 	f := setupFungalBoss()
 
 	// Store important spaces in the world

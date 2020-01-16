@@ -1,7 +1,7 @@
 package testing
 
 import (
-	"github.com/SolarLune/resolv/resolv"
+	"github.com/damienfamed75/endorem/pkg/physics"
 	r "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -18,7 +18,9 @@ type Plane struct {
 	Width  int32
 	Height int32
 
-	*resolv.Space
+	*physics.Rectangle
+	// Collision r.Rectangle
+	// *resolv.Space
 }
 
 // var _ Collision = (*Plane)(nil)
@@ -26,16 +28,9 @@ type Plane struct {
 // NewPlane returns the default shape of the testing plane which is meant for an
 // 800x600 display.
 func NewPlane(x, y, w, h int32, color r.Color) *Plane {
-	planeSpace := resolv.NewSpace()
-	planeSpace.SetData(planeSpace)
-	planeSpace.Add(
-		//resolv.NewRectangle(0, 500, 800, 100),
-		resolv.NewRectangle(x, y, w, h),
-	)
-
 	return &Plane{
-		Space: planeSpace,
-		Color: color,
+		Color:     color,
+		Rectangle: physics.NewRectangle(float32(x), float32(y), float32(w), float32(h)),
 
 		Width:  w,
 		Height: h,
@@ -44,16 +39,17 @@ func NewPlane(x, y, w, h int32, color r.Color) *Plane {
 
 // Draw creates a rectangle using Raylib and draws the outline of it.
 func (p *Plane) Draw() {
-	x, y := p.Space.GetXY()
+	// x, y := p.Space.GetXY()
 
-	rec := r.NewRectangle(
-		float32(x),
-		float32(y),
-		float32(p.Width),
-		float32(p.Height),
-	)
+	// rec := r.NewRectangle(
+	// 	float32(x),
+	// 	float32(y),
+	// 	float32(p.Width),
+	// 	float32(p.Height),
+	// )
 
-	r.DrawRectangleLinesEx(rec, 2, p.Color)
+	// r.DrawRectangleLinesEx(rec, 2, p.Color)
+	r.DrawRectangleLinesEx(p.Rectangle.Rectangle, 2, p.Color)
 }
 
 // func (p *Plane) HandleCollision(playerPos *resolv.Rectangle, playerHeight int32, speed *r.Vector2) (x, y int32) {
