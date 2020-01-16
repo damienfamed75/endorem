@@ -1,7 +1,10 @@
 package player
 
 import (
+	"log"
 	"time"
+
+	"github.com/damienfamed75/aseprite"
 
 	"github.com/SolarLune/resolv/resolv"
 	"github.com/damienfamed75/endorem/pkg/common"
@@ -10,12 +13,16 @@ import (
 
 // Mask handles the companion character that follows the player
 type Mask struct {
-	Sprite      r.Texture2D
+	Ase    *aseprite.File
+	Sprite r.Texture2D
+
 	movePattern string
 	current     r.Vector2
 	target      r.Vector2
 	Facing      common.Direction
 
+	shotAse      *aseprite.File
+	shotSprite   r.Texture2D
 	shotCooldown time.Time
 	shotTimer    time.Duration
 	shotRange    float32
@@ -32,6 +39,7 @@ func setupMask() *Mask {
 		Sprite: r.LoadTexture("assets/mask.png"),
 		Facing: common.Right,
 
+		shotSprite:   r.LoadTexture("assets/projectile.png"),
 		shotCooldown: time.Now(),
 		shotTimer:    time.Duration(500),
 		shotRange:    500,
@@ -45,6 +53,21 @@ func setupMask() *Mask {
 // NewMask returns a configured Mask entity
 func NewMask() *Mask {
 	m := setupMask()
+	var err error
+
+	m.Ase, err = aseprite.Open("assets/mask.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// m.shotAse, err = aseprite.Open("assets/projectile.json")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// Queues a default animation
+	m.Ase.Play("idle")
+	// m.shotAse.Play("")
 
 	m.SetData(m)
 
@@ -98,6 +121,7 @@ func (m *Mask) shoot() {
 	// Shoot when key is pressed and not on CD
 	if r.IsKeyDown(r.KeyC) {
 		if time.Since(m.shotCooldown) >= time.Millisecond*m.shotTimer {
+			m.Ase.Play("attack")
 			m.shotCooldown = time.Now()
 			bullet := resolv.NewRectangle(
 				int32(m.current.X), int32(m.current.Y), 5, 5)
@@ -108,6 +132,8 @@ func (m *Mask) shoot() {
 			}
 			m.Hitbox.Add(bullet)
 		}
+	} else {
+		m.Ase.Play("idle")
 	}
 
 	// Remove bullet when out of range
@@ -122,8 +148,40 @@ func (m *Mask) shoot() {
 
 // Draw Mask at new frame
 func (m *Mask) Draw() {
-	r.DrawTexture(m.Sprite, int(m.current.X), int(m.current.Y), r.White)
+	// MASK DRAWING
+	// srcX, srcY resemble the X and Y pixels where the active sprite is.
+	srcX, srcY := m.Ase.FrameBoundaries().X, m.Ase.FrameBoundaries().Y
+	w, h := m.Ase.FrameBoundaries().Width, m.Ase.FrameBoundaries().Height
 
+	// src resembles the cropped out area that the sprite is in the spritesheet.
+	var src r.Rectangle
+	if m.Facing == common.Left {
+		src = r.NewRectangle(float32(srcX), float32(srcY), float32(-w), float32(h))
+	} else {
+		src = r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
+	}
+
+	// dest is the world position that the slime should appear in.
+	dest := r.NewRectangle(float32(m.current.X), float32(m.current.Y), float32(w), float32(h))
+
+	r.DrawTexturePro(
+		m.Sprite, src, dest, r.NewVector2(0, 0), 0, r.White,
+	)
+
+	// PROJECTILE DRAWING
+	// srcX, srcY resemble the X and Y pixels where the active sprite is.
+	// srcX, srcY = m.shotAse.FrameBoundaries().X, m.shotAse.FrameBoundaries().Y
+	// w, h = m.shotAse.FrameBoundaries().Width, m.shotAse.FrameBoundaries().Height
+
+	// src = r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
+	// for _, shape := range *m.Hitbox {
+	// 	x, y := shape.GetXY()
+	// 	r.DrawRectangleLines(
+	// 		int(x), int(y),
+	// 		int(5), int(5),
+	// 		r.Red,
+	// 	)
+	// }
 	m.debugDraw()
 }
 
