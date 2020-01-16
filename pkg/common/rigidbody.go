@@ -9,8 +9,6 @@ package common
 // handles collisions and corrects itself.
 
 import (
-	"fmt"
-
 	r "github.com/lachee/raylib-goplus/raylib"
 
 	"github.com/SolarLune/resolv/resolv"
@@ -102,7 +100,7 @@ func (r *Rigidbody) Update(dt float32) {
 		// 	res.ResolveX = -r.maxSpeedX
 		// }
 		if res.Teleporting {
-			fmt.Printf("teleport(x) resx[%v] spdx[%v]\n", res.ResolveX, x)
+			// fmt.Printf("teleport(x) resx[%v] spdx[%v]\n", res.ResolveX, x)
 			// if res.ResolveX > 32 || res.ResolveX < -32 {
 			// 	res = r.ground.Resolve(r.collisions, 0, y)
 			// 	fmt.Printf("stuck check resy[%v] spdy[%v]\n", res.ResolveY, y)
@@ -113,7 +111,7 @@ func (r *Rigidbody) Update(dt float32) {
 			x = 0
 			r.Velocity.X = float32(-x)
 		} else {
-			fmt.Printf("resolve (x) resx[%v] spdx[%v]\n", res.ResolveX, x)
+			// fmt.Printf("resolve (x) resx[%v] spdx[%v]\n", res.ResolveX, x)
 			// x *= -1
 			x = res.ResolveX
 		}
@@ -145,12 +143,12 @@ func (r *Rigidbody) Update(dt float32) {
 		// r.Velocity.Y = 0
 
 		if res.Teleporting {
-			fmt.Printf("teleport(y) resy[%v] spdy[%v]\n", res.ResolveY, y)
+			// fmt.Printf("teleport(y) resy[%v] spdy[%v]\n", res.ResolveY, y)
 			res.ResolveY = -y
 			y = 0
 			r.Velocity.Y = float32(-y)
 		} else {
-			fmt.Printf("resolve (y) resy[%v] spdy[%v]\n", res.ResolveY, y)
+			// fmt.Printf("resolve (y) resy[%v] spdy[%v]\n", res.ResolveY, y)
 			// x *= -1
 			y = res.ResolveY
 		}

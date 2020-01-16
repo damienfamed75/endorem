@@ -69,5 +69,4 @@ func (m *Mask) Update() {
 // Draw Mask at new frame
 func (m *Mask) Draw() {
 	r.DrawTexture(m.Sprite, int(m.current.X), int(m.current.Y), r.White)
-	//log.Print("m draw")
 }

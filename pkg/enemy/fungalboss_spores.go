@@ -24,11 +24,13 @@ type Spores struct {
 
 func setupSpores() *Spores {
 	return &Spores{
-		Sprite:   r.LoadTexture("assets/playerDuck.png"),
-		Speed:    -3,
-		rowAmt:   5,
-		rowApart: 80,
-		Space:    resolv.NewSpace(),
+		Sprite:      r.LoadTexture("assets/playerDuck.png"),
+		sporeHeight: 10,
+		sporeWidth:  10,
+		Speed:       -3,
+		rowAmt:      5,
+		rowApart:    80,
+		Space:       resolv.NewSpace(),
 	}
 }
 
@@ -36,7 +38,7 @@ func NewSpores(bossX, bossY int32) *Spores {
 	s := setupSpores()
 
 	s.rowStart = bossX
-	s.rowHeight = bossY - 200 // rows start 200 pixels above boss
+	s.rowHeight = bossY - 300 // rows start 300 pixels above boss
 
 	return s
 }
@@ -84,10 +86,10 @@ func (s *Spores) Draw() {
 func (s *Spores) debugDraw() {
 	for _, shape := range *s.Space {
 		x, y := shape.GetXY()
-		r.DrawTexture(
-			s.Sprite,
+		r.DrawRectangleLines(
 			int(x), int(y),
-			r.White,
+			int(s.sporeWidth), int(s.sporeHeight),
+			r.Red,
 		)
 	}
 }
