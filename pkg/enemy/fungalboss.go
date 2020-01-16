@@ -58,7 +58,8 @@ type FungalBoss struct {
 }
 
 const (
-	BossHealth = 20
+	BossHealth = 40
+	// BossHealth = 20
 )
 
 func setupFungalBoss() *FungalBoss {
@@ -131,6 +132,10 @@ func NewFungalBoss(x, y int, world *physics.Space) *FungalBoss {
 
 	f.attackRangeAOE = f.Hurtbox.X - f.attackDistance
 	return f
+}
+
+func (f *FungalBoss) Dead() bool {
+	return f.isDead
 }
 
 // Update FungalBosses every frame, checking attack and validating rigidbody collision
@@ -212,6 +217,7 @@ func (f *FungalBoss) TakeDamage() {
 
 		if f.Health <= 0 {
 			f.isDead = true
+			f.Remove(f.Hurtbox)
 			r.PlaySound(f.deathSound)
 		}
 	}

@@ -3,6 +3,7 @@ package scene
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/SolarLune/resolv/resolv"
 
@@ -22,9 +23,12 @@ type DemoScene struct {
 	Background r.Texture2D
 	player     *player.Player
 
+	pausePlayer  bool
 	music        *r.Music
 	musicTrigger *testing.Plane
 	exitTrigger  *testing.Plane
+	curtain      *testing.Plane
+	endTextA     int
 
 	heartFull  r.Texture2D
 	heartEmpty r.Texture2D
@@ -33,6 +37,9 @@ type DemoScene struct {
 	ground *physics.Space
 	world  *physics.Space
 	fungus *enemy.FungalBoss
+
+	bossDeadBefore time.Time
+	bossDeadTimer  time.Duration
 
 	restart func()
 
@@ -55,6 +62,7 @@ func (d *DemoScene) Preload(restart func()) {
 	d.ground = physics.NewSpace()
 	d.world = physics.NewSpace()
 	d.boss = resolv.NewSpace()
+	d.bossDeadTimer = time.Duration(4)
 
 	d.heartFull = r.LoadTexture("assets/heart1.png")
 	d.heartEmpty = r.LoadTexture("assets/heart2.png")
@@ -82,6 +90,8 @@ func (d *DemoScene) Preload(restart func()) {
 	)
 	d.ground.AddTags(common.TagGround)
 
+	d.curtain = testing.NewPlane(0, 0, 1500, 1500, r.NewColor(0, 0, 0, 0))
+
 	d.musicTrigger = testing.NewPlane(277, 500, 200, 50, r.Gold)
 	d.exitTrigger = testing.NewPlane(160, 0, 10, 300, r.Red)
 
@@ -105,13 +115,14 @@ func (d *DemoScene) Preload(restart func()) {
 		d.fungus,
 	)
 	// Add enemies and boss to space
-
 }
 
 // Update frames
 func (d *DemoScene) Update(dt float32) {
 	// Update the camera and player.
-	d.camera.Update(d.player.Update(dt))
+	if !d.pausePlayer {
+		d.camera.Update(d.player.Update(dt))
+	}
 
 	d.music.UpdateStream()
 	// d.slime.Update(dt)
@@ -139,6 +150,14 @@ func (d *DemoScene) Update(dt float32) {
 
 		d.player = player.NewPlayer(int(demoSpawn.X), int(demoSpawn.Y), func() {}, d.ground)
 	}
+	if d.fungus.Dead() && time.Since(d.bossDeadBefore) > time.Second*d.bossDeadTimer {
+		if d.curtain.Color.A != 255 {
+			d.curtain.Color.A++
+		}
+		if d.endTextA != 255 {
+			d.endTextA++
+		}
+	}
 
 	d.player.Collision.X = int32(d.player.Position().X)
 	d.player.Collision.Y = int32(d.player.Position().Y)
@@ -154,7 +173,13 @@ func (d *DemoScene) Update(dt float32) {
 
 	if d.player.MaskObj.Hitbox.IsColliding(d.fungus.Hurtbox) {
 		fmt.Println("HIT BOSS YAY!")
-		d.fungus.TakeDamage()
+		if !d.fungus.Dead() {
+			d.fungus.TakeDamage()
+			if d.fungus.Dead() {
+				d.bossDeadBefore = time.Now()
+				d.pausePlayer = true
+			}
+		}
 	}
 	// for i := range *d.boss {
 	// 	if (*d.boss)[i].IsColliding(d.player.Collision) {
@@ -204,6 +229,10 @@ func (d *DemoScene) Draw() {
 
 		r.DrawTextureEx(heart, pos, 0, 0.5, r.White)
 	}
+
+	// d.curtain.Draw() // haha... get it? draw the curtain...
+	r.DrawRectangleRec(d.curtain.RayRec(), d.curtain.Color)
+	r.DrawText("Thank you for playing.", int(d.player.Position().X-100), int(d.player.Position().Y), 19, r.NewColor(255, 255, 255, uint8(d.endTextA)))
 
 	r.EndMode2D()
 }
