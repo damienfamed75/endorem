@@ -19,8 +19,9 @@ var (
 type FungalBoss struct {
 	Sprite r.Texture2D
 
-	Health int
-	isDead bool
+	Health  int
+	isDead  bool
+	Hurtbox *resolv.Rectangle
 
 	player *resolv.Space
 	ground *resolv.Space
@@ -28,35 +29,37 @@ type FungalBoss struct {
 	maxSpeedX int32
 	maxSpeedY int32
 
-	attackBefore time.Time
-	attackTimer  time.Duration // Time before making another attack(milliseconds)
-
-	HitboxAOE      *resolv.Rectangle
-	attackDistance int32 // How far aoe will go
-	attackSpeedAOE float32
-	attackRangeAOE int32 // Calculated X-axis that distance will go
-	isAttackingAOE bool
+	attackAoeBefore time.Time
+	attackAoeTimer  time.Duration // Time before making another attack(milliseconds)
+	HitboxAOE       *resolv.Rectangle
+	attackDistance  int32 // How far aoe will go
+	attackSpeedAOE  float32
+	attackRangeAOE  int32 // Calculated X-axis that distance will go
+	isAttackingAOE  bool
 
 	sporeBefore time.Time //How often the boss can shoot spores(milliseconds)
 	sporeTimer  time.Duration
 	spores      *Spores
 
-	*common.Rigidbody
+	//TODO does not need Rigidbody
+	//(stationary boss that stays on right side of boss room)
+	*resolv.Space
 }
 
 func setupFungalBoss() *FungalBoss {
 	return &FungalBoss{
-		Sprite:         r.LoadTexture("assets/fungalboss.png"),
-		Health:         1 + common.GlobalConfig.Enemy.AddedHealth,
-		maxSpeedX:      0,
-		maxSpeedY:      0,
-		attackSpeedAOE: -10,
-		isAttackingAOE: false,
-		attackBefore:   time.Now(),
-		attackTimer:    time.Duration(2000),
-		attackDistance: 200,
-		sporeBefore:    time.Now(),
-		sporeTimer:     time.Duration(2000), //REMOVE HARDCODED #
+		//Sprite:          r.LoadTexture("assets/fungalboss.png"),
+		Health:          1 + common.GlobalConfig.Enemy.AddedHealth,
+		maxSpeedX:       0,
+		maxSpeedY:       0,
+		attackSpeedAOE:  -10,
+		isAttackingAOE:  false,
+		attackAoeBefore: time.Now(),
+		attackAoeTimer:  time.Duration(5000),
+		attackDistance:  200,
+		sporeBefore:     time.Now(),
+		sporeTimer:      time.Duration(1000), //REMOVE HARDCODED #
+		Space:           resolv.NewSpace(),
 	}
 }
 
@@ -67,25 +70,20 @@ func NewFungalBoss(x, y int, world *resolv.Space) *FungalBoss {
 	f.player = world.FilterByTags(common.TagPlayer)
 	f.ground = world.FilterByTags(common.TagGround)
 
-	collision := resolv.NewRectangle(
-		int32(x), int32(y), f.Sprite.Width, f.Sprite.Height,
+	// For now, the hurtbox is a simple rectangle (the stem of the mushboy maybe)
+	f.Hurtbox = resolv.NewRectangle(
+		//TODO hardcoded width and height until sprite is made
+		int32(x), int32(y), 300, 500,
 	)
-	collision.AddTags(TagHurtbox, common.TagCollision)
+	f.Hurtbox.AddTags(TagHurtbox)
 
 	f.spores = NewSpores(int32(x), int32(y))
 	f.spores.AddTags(HitboxData)
 
-	// create Rigidbody
-	f.Rigidbody = common.NewRigidbody(
-		int32(x), int32(y),
-		f.maxSpeedX, f.maxSpeedY, f.ground,
-		collision,
-	)
-
 	f.SetData(f)
 	f.AddTags(common.TagEnemy, TagHurtbox)
 
-	f.attackRangeAOE = f.GetX() - f.attackDistance
+	f.attackRangeAOE = f.Hurtbox.X - f.attackDistance
 	return f
 }
 
@@ -96,20 +94,18 @@ func (f *FungalBoss) Update(dt float32) {
 	// Movement of spores
 	f.spores.Update()
 
-	f.Rigidbody.Update(dt)
 }
 
 func (f *FungalBoss) determineAttack() {
 	//TODO determine when certain attacks will happen
 	// attack 1 must not have happened recently (spores still falling)
 	// attack 2 must be in range
-	if time.Since(f.attackBefore) >= time.Millisecond*f.attackTimer {
-		f.attackBefore = time.Now()
+	//TODO attack 1 - standard shooting of fungal spore, they will drop
+	// down with time
+	f.sporeAttack()
 
-		//TODO attack 1 - standard shooting of fungal spore, they will drop
-		// down with time
-		f.sporeAttack()
-
+	if time.Since(f.attackAoeBefore) >= time.Millisecond*f.attackAoeTimer {
+		f.attackAoeBefore = time.Now()
 		//TODO attack 2 - ground AOE - when player is close enough to boss
 		// attack that comes out from boss to set distance, attacks only left
 		//TODO if player is in range
@@ -146,7 +142,7 @@ func (f *FungalBoss) sporeAttack() {
 func (f *FungalBoss) aoeAttack() {
 	log.Print("aoeAttack")
 	f.HitboxAOE = resolv.NewRectangle(
-		f.GetX(), f.GetY(),
+		f.Hurtbox.X, f.Hurtbox.Y,
 		50, 50,
 	)
 	f.isAttackingAOE = true
@@ -154,7 +150,8 @@ func (f *FungalBoss) aoeAttack() {
 
 // Draw sprite texture at given collision coordinates
 func (f *FungalBoss) Draw() {
-	r.DrawTexture(f.Sprite, int(f.GetX()), int(f.GetY()), r.White)
+	//r.DrawTexture(f.Sprite, int(f.GetX()), int(f.GetY()), r.White)
+
 	f.spores.Draw()
 
 	// Draw debug messages about the entity's current information
@@ -162,6 +159,14 @@ func (f *FungalBoss) Draw() {
 }
 
 func (f *FungalBoss) debugDraw() {
+	//Hurtbox
+	r.DrawRectangleLines(
+		int(f.Hurtbox.X), int(f.Hurtbox.Y),
+		int(f.Hurtbox.W), int(f.Hurtbox.H),
+		r.White,
+	)
+
+	// Ground Attack
 	if f.isAttackingAOE {
 		// fmt.Printf("X[%v], Y[%v]", f.HitboxAOE.X, f.HitboxAOE.Y)
 		r.DrawRectangleLines(
