@@ -55,9 +55,9 @@ func (s *Spores) CreateRow() {
 	// For the amount of spores, create a hitbox based on the
 	// determined space apart
 	for i := 0; i <= s.rowAmt; i++ {
-
+		rowSporeY := rand.Int31n(20) + s.rowHeight
 		spore := resolv.NewRectangle(
-			area, s.rowHeight, 5, 5)
+			area, rowSporeY, 5, 5)
 
 		// Update the x-axis for the next spore
 		area -= s.rowApart
@@ -71,6 +71,7 @@ func (s *Spores) Update() {
 	// Updates the position of each indiviudal spore in Space
 	for _, shape := range *s.Space {
 		x, y := shape.GetXY()
+		// TODO added sin path to X for additional movement
 		shape.SetXY(x, y-s.Speed)
 	}
 
