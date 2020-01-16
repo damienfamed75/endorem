@@ -1,6 +1,7 @@
 package enemy
 
 import (
+	"math"
 	"math/rand"
 
 	"github.com/SolarLune/resolv/resolv"
@@ -11,6 +12,7 @@ type Spores struct {
 	Sprite      r.Texture2D
 	sporeHeight int
 	sporeWidth  int
+	sporeMoveX  float64
 
 	Speed int32
 
@@ -68,11 +70,13 @@ func (s *Spores) CreateRow() {
 
 // Update the position of each spore in space
 func (s *Spores) Update() {
+	s.sporeMoveX += 0.5
 	// Updates the position of each indiviudal spore in Space
 	for _, shape := range *s.Space {
 		x, y := shape.GetXY()
-		// TODO added sin path to X for additional movement
-		shape.SetXY(x, y-s.Speed)
+		displacementX := (2 * int32(math.Sin(s.sporeMoveX*(math.Pi))))
+
+		shape.SetXY(x+displacementX, y-s.Speed)
 	}
 
 	//TODO remove spores once they reach the ground, need to add ground to spores

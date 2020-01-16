@@ -133,7 +133,7 @@ func (m *Mask) debugDraw() {
 		r.DrawRectangleLines(
 			int(x), int(y),
 			int(5), int(5),
-			r.Blue,
+			r.Red,
 		)
 	}
 }
