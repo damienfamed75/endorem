@@ -104,7 +104,7 @@ func (f *FungalBoss) Update(dt float32) {
 	f.determineAttack()
 
 	// Movement of spores
-	f.spores.Update()
+	f.spores.Update(dt)
 
 }
 

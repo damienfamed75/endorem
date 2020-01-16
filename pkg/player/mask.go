@@ -43,7 +43,7 @@ func setupMask() *Mask {
 		shotCooldown: time.Now(),
 		shotTimer:    time.Duration(500),
 		shotRange:    500,
-		shotSpeed:    10,
+		shotSpeed:    5,
 		Hitbox:       resolv.NewSpace(),
 		state:        common.StateIdle,
 		Space:        resolv.NewSpace(),
@@ -60,15 +60,14 @@ func NewMask() *Mask {
 		log.Fatal(err)
 	}
 
-	// m.shotAse, err = aseprite.Open("assets/projectile.json")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	m.shotAse, err = aseprite.Open("assets/projectile.json")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Queues a default animation
 	m.Ase.Play("idle")
-	// m.shotAse.Play("")
-
+	m.shotAse.Play("fire")
 	m.SetData(m)
 
 	return m
@@ -100,7 +99,10 @@ func (m *Mask) checkDirection(diff r.Vector2, pFacing common.Direction) {
 }
 
 // Update Mask
-func (m *Mask) Update() {
+func (m *Mask) Update(dt float32) {
+	m.Ase.Update(dt)
+	m.shotAse.Update(dt)
+
 	m.current = m.current.Lerp(m.target, 0.1)
 
 	m.shoot()
@@ -170,10 +172,22 @@ func (m *Mask) Draw() {
 
 	// PROJECTILE DRAWING
 	// srcX, srcY resemble the X and Y pixels where the active sprite is.
-	// srcX, srcY = m.shotAse.FrameBoundaries().X, m.shotAse.FrameBoundaries().Y
-	// w, h = m.shotAse.FrameBoundaries().Width, m.shotAse.FrameBoundaries().Height
+	srcX, srcY = m.shotAse.FrameBoundaries().X, m.shotAse.FrameBoundaries().Y
+	w, h = m.shotAse.FrameBoundaries().Width, m.shotAse.FrameBoundaries().Height
 
-	// src = r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
+	src = r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
+	for _, shape := range *m.Hitbox {
+		x, y := shape.GetXY()
+		dest := r.NewRectangle(float32(x), float32(y), float32(w), float32(h))
+
+		r.DrawTexturePro(
+			m.shotSprite, src, dest, r.NewVector2(0, 0), 0, r.White,
+		)
+	}
+	m.debugDraw()
+}
+
+func (m *Mask) debugDraw() {
 	// for _, shape := range *m.Hitbox {
 	// 	x, y := shape.GetXY()
 	// 	r.DrawRectangleLines(
@@ -182,16 +196,4 @@ func (m *Mask) Draw() {
 	// 		r.Red,
 	// 	)
 	// }
-	m.debugDraw()
-}
-
-func (m *Mask) debugDraw() {
-	for _, shape := range *m.Hitbox {
-		x, y := shape.GetXY()
-		r.DrawRectangleLines(
-			int(x), int(y),
-			int(5), int(5),
-			r.Red,
-		)
-	}
 }
