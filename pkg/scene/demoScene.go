@@ -14,8 +14,9 @@ import (
 // DemoScene is the level that will be the presentation level
 // for the Weekly Game Jam (131)
 type DemoScene struct {
-	DebugSpr r.Texture2D
-	player   *player.Player
+	Foreground r.Texture2D
+	Background r.Texture2D
+	player     *player.Player
 
 	ground *physics.Space
 
@@ -29,9 +30,11 @@ func (d *DemoScene) Preload() {
 	d.ground = physics.NewSpace()
 	d.world = physics.NewSpace()
 
-	d.DebugSpr = r.LoadTexture("assets/blockout1.png")
-	log.Print(d.DebugSpr.Height)
-	log.Print(d.DebugSpr.Width)
+	d.Foreground = r.LoadTexture("assets/foreground.png")
+	d.Background = r.LoadTexture("assets/background.png")
+
+	log.Print(d.Foreground.Height)
+	log.Print(d.Foreground.Width)
 	// Add all ground to ground space.
 	d.ground.Add(
 		// left
@@ -74,9 +77,14 @@ func (d *DemoScene) Update(dt float32) {
 // Draw frames
 func (d *DemoScene) Draw() {
 	r.BeginMode2D(d.camera.Camera2D)
-	r.ClearBackground(r.Gray)
+	// r.ClearBackground(r.Gray)
+	r.ClearBackground(r.NewColor(31, 14, 28, 255))
+
+	r.DrawTexture(d.Background, 0, 0, r.White)
+	r.DrawTexture(d.Foreground, 0, 0, r.White)
 
 	d.player.Draw()
+
 	d.debugDraw()
 	// Draw all ground elements
 	// for i := range *d.ground {
@@ -95,7 +103,8 @@ func (d *DemoScene) String() string {
 }
 func (d *DemoScene) debugDraw() {
 	// Used to correlate collisions to textures
-	r.DrawTexture(d.DebugSpr, 0, 0, r.Red)
+	// r.DrawTexture(d.Background, 0, 0, r.White)
+	// r.DrawTexture(d.Foreground, 0, 0, r.White)
 
 	// Draw ground collision boxes
 	// for _, shape := range *d.ground{
