@@ -1,8 +1,8 @@
 {
     "game": {
         "screen": {
-            "width": 800,
-            "height": 600
+            "width": 960,
+            "height": 720
         },
         "camera": {
             "defaultZoom": 3.0,

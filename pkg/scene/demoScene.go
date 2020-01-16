@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/damienfamed75/endorem/pkg/common"
-	"github.com/damienfamed75/endorem/pkg/enemy"
 	"github.com/damienfamed75/endorem/pkg/physics"
 	"github.com/damienfamed75/endorem/pkg/player"
 	"github.com/damienfamed75/endorem/pkg/testing"
@@ -19,11 +18,12 @@ type DemoScene struct {
 	Background r.Texture2D
 	player     *player.Player
 
+	music        *r.Music
+	musicTrigger *testing.Plane
+	exitTrigger  *testing.Plane
+
 	ground *physics.Space
-
-	world *physics.Space
-
-	slime *enemy.Slime
+	world  *physics.Space
 
 	camera *common.EndoCamera
 }
@@ -31,6 +31,11 @@ type DemoScene struct {
 // Preload is used to load in assets and entities
 func (d *DemoScene) Preload() {
 	r.InitAudioDevice()
+
+	d.music = r.LoadMusicStream("assets/sounds/Broke_For_Free_-_01_-_Night_Owl.mp3")
+	d.music.SetLoopCount(5)
+	d.music.SetVolume(0.7)
+	// d.music = r.LoadSound("assets/sounds/Broke_For_Free_-_01_-_Night_Owl.mp3")
 
 	d.ground = physics.NewSpace()
 	d.world = physics.NewSpace()
@@ -51,14 +56,21 @@ func (d *DemoScene) Preload() {
 		// right
 		testing.NewPlane(941, 168, 59, 736, r.Orange),
 		testing.NewPlane(380, 168, 563, 442, r.Orange),
+
+		// invisible walle
+		testing.NewPlane(850, 0, 50, 200, r.Yellow),
+		testing.NewPlane(150, 0, 10, 200, r.Yellow),
 	)
 	d.ground.AddTags(common.TagGround)
+
+	d.musicTrigger = testing.NewPlane(277, 500, 200, 50, r.Gold)
+	d.exitTrigger = testing.NewPlane(160, 0, 10, 300, r.Red)
 
 	// Add ground elements to the world space.
 	d.world.Add(*d.ground...)
 
 	// Create player & camera
-	d.player = player.NewPlayer(100, 50, func() {}, d.ground)
+	d.player = player.NewPlayer(200, 50, func() {}, d.ground)
 	d.player.AddTags(common.TagPlayer)
 
 	d.camera = common.NewEndoCamera(d.player.Collision)
@@ -78,18 +90,25 @@ func (d *DemoScene) Preload() {
 func (d *DemoScene) Update(dt float32) {
 	// Update the camera and player.
 	d.camera.Update(d.player.Update(dt))
+
+	d.music.UpdateStream()
 	// d.slime.Update(dt)
 
-	// if d.slime.Overlaps(d.player.RayRec()) {
-	// 	// overlap := d.slime.RayRec().GetOverlapRec(d.player.RayRec())
-	// 	var dir float32
-	// 	if d.player.RayRec().X > d.slime.RayRec().X {
-	// 		dir = 1
-	// 	} else {
-	// 		dir = -1
-	// 	}
+	if d.musicTrigger.Overlaps(d.player.RayRec()) {
+		d.music.PlayStream()
+		// var dir float32
+		// if d.player.RayRec().X > d.slime.RayRec().X {
+		// 	dir = 1
+		// } else {
+		// 	dir = -1
+		// }
 
-	// 	d.player.TakeDamage(dir)
+		// d.player.TakeDamage(dir)
+	}
+	// if d.exitTrigger.Overlaps(d.player.RayRec()) {
+	// d.Unload()
+	// r.CloseWindow()
+	// exit
 	// }
 }
 
@@ -100,9 +119,11 @@ func (d *DemoScene) Draw() {
 	r.ClearBackground(r.NewColor(31, 14, 28, 255))
 
 	r.DrawTexture(d.Background, 0, 0, r.White)
+	r.DrawTextureEx(d.Background, r.NewVector2(float32(d.Background.Width), 0), 180, 1, r.White)
 	r.DrawTexture(d.Foreground, 0, 0, r.White)
 
 	d.player.Draw()
+
 	// d.slime.Draw()
 
 	d.debugDraw()
@@ -115,7 +136,10 @@ func (d *DemoScene) Draw() {
 }
 
 func (d *DemoScene) Unload() {
-
+	d.player.Sprite.Unload()
+	d.player.MaskObj.Sprite.Unload()
+	d.Background.Unload()
+	d.Foreground.Unload()
 }
 
 func (d *DemoScene) String() string {

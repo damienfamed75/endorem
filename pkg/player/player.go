@@ -126,7 +126,7 @@ func (p *Player) Update(dt float32) r.Vector2 {
 	p.Ase.Update(dt)
 	p.state = common.StateIdle
 
-	if p.MaskObj.Ase.IsPlaying("attack") && !p.Ase.IsPlaying("attack") {
+	if p.MaskObj.Ase.IsPlaying("attack") {
 		fmt.Println(p.Ase.CurrentAnimation.Name)
 		p.Ase.Play("attack")
 	} else {
