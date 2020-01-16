@@ -32,6 +32,8 @@ type FungalBoss struct {
 	maxSpeedX int32
 	maxSpeedY int32
 
+	aoeAse          *aseprite.File
+	aoeSprite       r.Texture2D
 	attackAoeBefore time.Time
 	attackAoeTimer  time.Duration // Time before making another attack(milliseconds)
 	HitboxAOE       *resolv.Rectangle
@@ -44,17 +46,17 @@ type FungalBoss struct {
 	sporeTimer  time.Duration
 	spores      *Spores
 
-	//TODO does not need Rigidbody
-	//(stationary boss that stays on right side of boss room)
 	*resolv.Space
 }
 
 func setupFungalBoss() *FungalBoss {
 	return &FungalBoss{
-		Sprite:          r.LoadTexture("assets/mushroom.png"),
-		Health:          1 + common.GlobalConfig.Enemy.AddedHealth,
-		maxSpeedX:       0,
-		maxSpeedY:       0,
+		Sprite:    r.LoadTexture("assets/mushroom.png"),
+		Health:    1 + common.GlobalConfig.Enemy.AddedHealth,
+		maxSpeedX: 0,
+		maxSpeedY: 0,
+
+		aoeSprite:       r.LoadTexture("assets/smoke.png"),
 		attackSpeedAOE:  -10,
 		isAttackingAOE:  false,
 		attackAoeBefore: time.Now(),
@@ -75,6 +77,11 @@ func NewFungalBoss(x, y int, world *physics.Space) *FungalBoss {
 		log.Fatal(err)
 	}
 
+	f.aoeAse, err = aseprite.Open("assets/smoke.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Queues a default animation.
 	f.Ase.Play("idle")
 
@@ -85,7 +92,7 @@ func NewFungalBoss(x, y int, world *physics.Space) *FungalBoss {
 	// For now, the hurtbox is a simple rectangle (the stem of the mushboy maybe)
 	f.Hurtbox = resolv.NewRectangle(
 		//TODO hardcoded width and height until sprite is made
-		int32(x), int32(y), 300, 500,
+		int32(x), int32(y), 128, 128,
 	)
 	f.Hurtbox.AddTags(TagHurtbox)
 
@@ -101,6 +108,7 @@ func NewFungalBoss(x, y int, world *physics.Space) *FungalBoss {
 
 // Update FungalBosses every frame, checking attack and validating rigidbody collision
 func (f *FungalBoss) Update(dt float32) {
+	f.Ase.Update(dt)
 	f.determineAttack()
 
 	// Movement of spores
@@ -112,13 +120,13 @@ func (f *FungalBoss) determineAttack() {
 	//TODO determine when certain attacks will happen
 	// attack 1 must not have happened recently (spores still falling)
 	// attack 2 must be in range
-	//TODO attack 1 - standard shooting of fungal spore, they will drop
+	//attack 1 - standard shooting of fungal spore, they will drop
 	// down with time
 	f.sporeAttack()
 
 	if time.Since(f.attackAoeBefore) >= time.Millisecond*f.attackAoeTimer {
 		f.attackAoeBefore = time.Now()
-		//TODO attack 2 - ground AOE - when player is close enough to boss
+		//attack 2 - ground AOE - when player is close enough to boss
 		// attack that comes out from boss to set distance, attacks only left
 		//TODO if player is in range
 		if !f.isAttackingAOE {
@@ -138,7 +146,6 @@ func (f *FungalBoss) determineAttack() {
 		} else {
 			f.HitboxAOE.SetXY(newHitboxX, y)
 		}
-
 	}
 }
 
@@ -162,10 +169,21 @@ func (f *FungalBoss) aoeAttack() {
 
 // Draw sprite texture at given collision coordinates
 func (f *FungalBoss) Draw() {
-	//r.DrawTexture(f.Sprite, int(f.GetX()), int(f.GetY()), r.White)
+	// srcX, srcY resemble the X and Y pixels where the active sprite is.
+	srcX, srcY := f.Ase.FrameBoundaries().X, f.Ase.FrameBoundaries().Y
+	w, h := f.Ase.FrameBoundaries().Width, f.Ase.FrameBoundaries().Height
+
+	// src resembles the cropped out area that the sprite is in the spritesheet.
+	src := r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
+
+	// dest is the world position that the slime should appear in.
+	dest := r.NewRectangle(float32(f.Hurtbox.X), float32(f.Hurtbox.Y), float32(w), float32(h))
+
+	r.DrawTexturePro(
+		f.Sprite, src, dest, r.NewVector2(0, 0), 0, r.White,
+	)
 
 	f.spores.Draw()
-
 	// Draw debug messages about the entity's current information
 	f.debugDraw()
 }

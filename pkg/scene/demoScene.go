@@ -3,7 +3,10 @@ package scene
 import (
 	"log"
 
+	"github.com/SolarLune/resolv/resolv"
+
 	"github.com/damienfamed75/endorem/pkg/common"
+	"github.com/damienfamed75/endorem/pkg/enemy"
 	"github.com/damienfamed75/endorem/pkg/physics"
 	"github.com/damienfamed75/endorem/pkg/player"
 	"github.com/damienfamed75/endorem/pkg/testing"
@@ -19,6 +22,7 @@ type DemoScene struct {
 	player     *player.Player
 
 	ground *physics.Space
+	boss   *resolv.Space
 
 	world *physics.Space
 
@@ -29,6 +33,7 @@ type DemoScene struct {
 func (d *DemoScene) Preload() {
 	d.ground = physics.NewSpace()
 	d.world = physics.NewSpace()
+	d.boss = resolv.NewSpace()
 
 	d.Foreground = r.LoadTexture("assets/foreground.png")
 	d.Background = r.LoadTexture("assets/background.png")
@@ -63,7 +68,9 @@ func (d *DemoScene) Preload() {
 	d.world.Add(*d.player.Space...)
 
 	// Add enemies and boss to space
-
+	d.boss.Add(
+		enemy.NewFungalBoss(700, 1000-96-128, d.world),
+	)
 	// Add enemies and boss to space
 
 }
@@ -72,6 +79,10 @@ func (d *DemoScene) Preload() {
 func (d *DemoScene) Update(dt float32) {
 	// Update the camera and player.
 	d.camera.Update(d.player.Update(dt))
+
+	for i := range *d.boss {
+		(*d.boss)[i].(common.Entity).Update(dt)
+	}
 }
 
 // Draw frames
@@ -90,6 +101,11 @@ func (d *DemoScene) Draw() {
 	// for i := range *d.ground {
 	// 	(*d.ground)[i].(Drawer).Draw()
 	// }
+
+	// Draw boss
+	for i := range *d.boss {
+		(*d.boss)[i].(common.Entity).Draw()
+	}
 
 	r.EndMode2D()
 }
