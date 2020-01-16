@@ -5,7 +5,7 @@
             "height": 600
         },
         "camera": {
-            "defaultZoom": 2.0,
+            "defaultZoom": 3.0,
             "defaultSpeed": 0.1
         },
         "volume": 100,

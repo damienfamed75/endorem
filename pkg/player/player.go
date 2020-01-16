@@ -1,9 +1,11 @@
 package player
 
 import (
+	"log"
 	"time"
 
 	"github.com/SolarLune/resolv/resolv"
+	"github.com/damienfamed75/aseprite"
 	"github.com/damienfamed75/endorem/pkg/common"
 	"github.com/damienfamed75/endorem/pkg/physics"
 	r "github.com/lachee/raylib-goplus/raylib"
@@ -12,15 +14,17 @@ import (
 // Player is the standard playable character, including functions that allow
 // for movement and action
 type Player struct {
-	MaskObj     *Mask
-	SpriteStand r.Texture2D
-	SpriteDuck  r.Texture2D
-	Collision   *resolv.Rectangle
-	Hitbox      *physics.Rectangle
-	Health      int
-	MaxHealth   int
-	IsDead      bool
-	Facing      common.Direction
+	Ase    *aseprite.File
+	Sprite r.Texture2D
+
+	MaskObj *Mask
+
+	Collision *resolv.Rectangle
+	Hitbox    *physics.Rectangle
+	Health    int
+	MaxHealth int
+	IsDead    bool
+	Facing    common.Direction
 	*physics.Body
 
 	maxSpeedX  int32
@@ -29,8 +33,6 @@ type Player struct {
 	SpeedY     float32
 	jumpHeight float32
 	madeJump   bool
-
-	// Ground *resolv.Space
 
 	isAttacking     bool
 	isCrouched      bool
@@ -42,17 +44,13 @@ type Player struct {
 	state           common.State
 
 	*Inventory
-	//*resolv.Space
-	// *common.Rigidbody
 }
 
 func setupPlayer() *Player {
 	return &Player{
-		MaskObj:     NewMask(),
-		Inventory:   NewInventory(),
-		SpriteStand: r.LoadTexture("assets/playerTest.png"),
-		SpriteDuck:  r.LoadTexture("assets/playerDuck.png"),
-		//Space:           resolv.NewSpace(),
+		Sprite:          r.LoadTexture("assets/player.png"),
+		MaskObj:         NewMask(),
+		Inventory:       NewInventory(),
 		Facing:          common.Right,
 		Health:          3,
 		maxSpeedX:       4,
@@ -71,34 +69,35 @@ func setupPlayer() *Player {
 // the collision space for the player
 func NewPlayer(x, y int, deathFunc func(), ground *physics.Space) *Player {
 	p := setupPlayer()
-	p.MaskObj.setMovePattern("test")
+	var err error
+
+	p.Ase, err = aseprite.Open("assets/player.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Queues a default animation
+	p.Ase.Play("idle")
+
 	// Create Mask to follow player
 	// Set the death function that'll be called when the player dies.
 	p.deathFunc = deathFunc
 
 	p.Body = physics.NewBody(
 		float32(x), float32(y),
-		float32(p.SpriteStand.Width), float32(p.SpriteStand.Height),
+		float32(p.Ase.FrameBoundaries().Width), float32(p.Ase.FrameBoundaries().Height),
 		float32(p.maxSpeedX), float32(p.maxSpeedY),
 	)
 
 	// Setup collision and trigger boxes for the player.
 	p.Collision = resolv.NewRectangle(
 		int32(x), int32(y),
-		p.SpriteStand.Width, p.SpriteStand.Height,
+		int32(p.Ase.FrameBoundaries().Width), int32(p.Ase.FrameBoundaries().Height),
 	)
 	p.Collision.AddTags(common.TagCollision)
-	p.Hitbox = physics.NewRectangle(
-		0, 0, float32(p.SpriteStand.Height), float32(p.SpriteStand.Width),
-	)
 
 	// Set all spaces to have self referencial data.
 	p.SetData(p)
-
-	p.Hitbox.AddTags(TagHitbox)
-
-	// Add to collision boxes to player space.
-	p.Add(p.Hitbox)
 
 	p.AddGround(*ground...)
 
@@ -107,6 +106,7 @@ func NewPlayer(x, y int, deathFunc func(), ground *physics.Space) *Player {
 
 // Update player
 func (p *Player) Update(dt float32) r.Vector2 {
+	p.Ase.Update(dt)
 	p.state = common.StateIdle
 
 	p.movePlayer()
@@ -130,17 +130,25 @@ func (p *Player) Update(dt float32) r.Vector2 {
 func (p *Player) Draw() {
 	p.MaskObj.Draw()
 
-	if p.isCrouched {
-		r.DrawTexture(p.SpriteDuck, int(p.Position().X), int(p.Position().Y), r.White)
+	// srcX, srcY resemble the X and Y pixels where the active sprite is.
+	srcX, srcY := p.Ase.FrameBoundaries().X, p.Ase.FrameBoundaries().Y
+	w, h := p.Ase.FrameBoundaries().Width, p.Ase.FrameBoundaries().Height
+
+	// src resembles the cropped out area that the sprite is in the spritesheet.
+	var src r.Rectangle
+	if p.Facing == common.Left {
+		src = r.NewRectangle(float32(srcX), float32(srcY), float32(-w), float32(h))
 	} else {
-		r.DrawTexture(
-			p.SpriteStand,
-			int(p.Body.Position().X),
-			int(p.Body.Position().Y),
-			r.White,
-		)
-		// r.DrawTexture(p.SpriteStand, int(p.GetX()), int(p.GetY()), r.White)
+		src = r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
 	}
+
+	// dest is the world position that the slime should appear in.
+	dest := r.NewRectangle(float32(p.Position().X), float32(p.Position().Y), float32(w), float32(h))
+
+	r.DrawTexturePro(
+		p.Sprite, src, dest, r.NewVector2(0, 0), 0, r.White,
+	)
+
 	p.debugDraw()
 }
 
@@ -169,26 +177,26 @@ func (p *Player) movePlayer() {
 	// Slows down player movement after key is released
 	if p.Velocity.X > friction {
 		p.Body.Velocity.X -= friction
-		// p.Rigidbody.Velocity.X -= friction
+		p.Ase.Play("run")
 	} else if p.Velocity.X < -friction {
 		p.Body.Velocity.X += friction
-		// p.Rigidbody.Velocity.X += friction
+		p.Ase.Play("run")
 	} else {
 		p.Body.Velocity.X = 0
-		// p.Rigidbody.Velocity.X = 0
+		p.Ase.Play("idle")
 	}
 
 	// Controller Events
 	// TODO For simplicity in testing the velocity is the maxSpeed of X
 	if r.IsKeyDown(r.KeyRight) {
 		p.Body.Velocity.X += float32(p.maxSpeedX)
-		// p.Rigidbody.Velocity.X += float32(p.maxSpeedX)
+
 		p.Facing = common.Right
 		p.state = common.StateRight
 	}
 	if r.IsKeyDown(r.KeyLeft) {
 		p.Body.Velocity.X -= float32(p.maxSpeedX)
-		// p.Rigidbody.Velocity.X -= float32(p.maxSpeedX)
+
 		p.Facing = common.Left
 		p.state = common.StateLeft
 	}
