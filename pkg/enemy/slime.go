@@ -2,9 +2,11 @@ package enemy
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
+	"github.com/damienfamed75/aseprite"
 	"github.com/damienfamed75/endorem/pkg/common"
 	"github.com/damienfamed75/endorem/pkg/physics"
 
@@ -13,6 +15,7 @@ import (
 )
 
 type Slime struct {
+	Ase    *aseprite.File
 	Sprite r.Texture2D
 
 	Health int
@@ -33,6 +36,7 @@ type Slime struct {
 	attackJumpHeight float32
 	maxSpeedX        int32
 	maxSpeedY        int32
+	targetAnimation  string
 
 	playerSeen    bool
 	jumpTimeBegin time.Time
@@ -54,9 +58,9 @@ func setupSlime() *Slime {
 		jumpTimer:        1000,
 		travelSpeed:      0.5,
 		attackSpeed:      4,
-		maxSpeedX:        6,
+		maxSpeedX:        8,
 		maxSpeedY:        6,
-		attackJumpHeight: -4,
+		attackJumpHeight: -4.5,
 		travelJumpHeight: -4,
 		jumpTimeBegin:    time.Now(),
 		invincibleTimer:  time.Duration(common.GlobalConfig.Enemy.InvincibleTimer),
@@ -66,19 +70,28 @@ func setupSlime() *Slime {
 // NewSlime creates a slime at the given position.
 func NewSlime(x, y int, world *physics.Space) *Slime {
 	s := setupSlime()
+	var err error
+
+	s.Ase, err = aseprite.Open("assets/slime.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Queues a default animation.
+	s.Ase.Play("idle")
 
 	// Store the important spaces in the world.
 	s.player = (*world.FilterByTags(common.TagPlayer))[0]
 	s.ground = world.FilterByTags(common.TagGround)
 
 	collision := resolv.NewRectangle(
-		int32(x), int32(y), s.Sprite.Width, s.Sprite.Height,
+		int32(x), int32(y), int32(s.Ase.FrameBoundaries().Width), int32(s.Ase.FrameBoundaries().Height),
 	)
 	collision.AddTags(TagHurtbox, common.TagCollision)
 
 	s.Body = physics.NewBody(
 		float32(x), float32(y),
-		float32(s.Sprite.Width), float32(s.Sprite.Height),
+		float32(s.Ase.FrameBoundaries().Width), float32(s.Ase.FrameBoundaries().Height),
 		float32(s.maxSpeedX), float32(s.maxSpeedY),
 	)
 
@@ -97,10 +110,16 @@ func NewSlime(x, y int, world *physics.Space) *Slime {
 }
 
 func (s *Slime) TakeDamage() {
-	if time.Since(s.healthBefore) >= time.Millisecond*s.invincibleTimer {
+	if time.Since(s.healthBefore) >= time.Millisecond*s.invincibleTimer && !s.IsDead {
 		s.healthBefore = time.Now()
 
 		s.Health--
+		// s.Rigidbody.Velocity.X = -(s.travelSpeed * s.getPlayerDirection())
+		// s.Rigidbody.Velocity.Y = -s.travelSpeed
+		// s.attacking = true
+		// TODO push slime back from the player and play hurt animation.
+		// s.playPriorityAnimation("damage")
+
 		if s.Health <= 0 {
 			s.IsDead = true
 			// s.Clear()
@@ -108,15 +127,36 @@ func (s *Slime) TakeDamage() {
 	}
 }
 
+func (s *Slime) playPriorityAnimation(anim string) {
+	s.Ase.Play(anim)
+	s.targetAnimation = anim
+}
+
+func (s *Slime) playingTargetAnimation() bool {
+	if s.Ase.IsPlaying(s.targetAnimation) {
+		return s.Ase.AnimationFinished()
+	}
+
+	return false
+}
+
 // Update gets called every frame and tells if the slime is going to
 // sit still, idle travel around, jump to the player, or attack.
 func (s *Slime) Update(dt float32) {
-	px, py := s.player.Position().X, s.player.Position().Y
+	s.Ase.Update(dt)
+
+	if s.IsDead {
+		if s.waitAndPlay("death") {
+			s.Clear()
+		}
+
+		return
+	}
 
 	dist := resolv.Distance(
 		int32(s.Position().X), int32(s.Position().Y),
 		// s.GetX(), s.GetY(),
-		int32(px), int32(py),
+		int32(s.player.Position().X), int32(s.player.Position().Y),
 	)
 
 	s.playerSeen = dist < common.GlobalConfig.Enemy.VisionDistance
@@ -142,10 +182,11 @@ func (s *Slime) Update(dt float32) {
 	} else {
 		s.Body.Velocity.X = 0
 		// s.Rigidbody.Velocity.X = 0
+		s.Ase.Play("idle")
 	}
 
-	// Update the slime's position according to gravity and checks collisions
 	s.Body.Update(dt)
+	// Update the slime's position according to gravity and checks collisions
 }
 
 func (s *Slime) attack() {
@@ -164,6 +205,7 @@ func (s *Slime) followPlayer() {
 
 	if !s.OnGround() && !s.attacking {
 		s.Body.Velocity.X = s.travelSpeed * s.getPlayerDirection()
+		s.attacking = true
 	} else if !s.attacking {
 		s.Body.Velocity.X = 0
 	}
@@ -180,26 +222,63 @@ func (s *Slime) getPlayerDirection() float32 {
 }
 
 // jump is the slime's main form of movement.
-func (s *Slime) jump(height float32) bool {
+func (s *Slime) jump(height float32) {
 	// If the slime is on the ground and has waited long enough to jump
 	// again then perform a jump.
 	if s.OnGround() && time.Since(s.jumpTimeBegin) > time.Millisecond*s.jumpTimer {
-		// if s.onGround && time.Since(s.jumpTimeBegin) > time.Millisecond*s.jumpTimer {
-		// Reset jump timer.
-		s.jumpTimeBegin = time.Now()
+		if s.playingTargetAnimation() {
+			return
+		}
 
-		// Set the vertical speed of the slime.
-		s.Body.Velocity.Y = height
+		if s.waitAndPlay("jump") {
+			// Reset jump timer.
+			s.jumpTimeBegin = time.Now()
+
+			// Set the vertical speed of the slime.
+			s.Body.Velocity.Y = height
+			// Update that the slime is not on the ground anymore.
+		}
+	} else if s.OnGround() {
+		if !s.playingTargetAnimation() {
+			s.Ase.Play("idle")
+		}
+	}
+}
+
+// waitAndPlay queues an animation to be played and
+// returns false until it has finishes.
+func (s *Slime) waitAndPlay(anim string) bool {
+	// If the wanted animation is already playing.
+	if s.Ase.IsPlaying(anim) {
+		// And the animation has finished.
+		if s.Ase.AnimationFinished() {
+			return true
+		}
+
+		return false
 	}
 
-	return !s.OnGround()
+	// Play the animation if it's not playing.
+	s.Ase.Play(anim)
+
+	return false
 }
 
 // Draw the sprite texture at the collision box coordinates.
 func (s *Slime) Draw() {
-	// sx, sy := s.GetXY()
-	// r.DrawTexture(s.Sprite, int(sx), int(sy), r.White)
-	r.DrawTexture(s.Sprite, int(s.Position().X), int(s.Position().Y), r.White)
+	// srcX, srcY resemble the X and Y pixels where the active sprite is.
+	srcX, srcY := s.Ase.FrameBoundaries().X, s.Ase.FrameBoundaries().Y
+	w, h := s.Ase.FrameBoundaries().Width, s.Ase.FrameBoundaries().Height
+
+	// src resembles the cropped out area that the sprite is in the spritesheet.
+	src := r.NewRectangle(float32(srcX), float32(srcY), float32(w), float32(h))
+
+	// dest is the world position that the slime should appear in.
+	dest := r.NewRectangle(float32(s.Position().X), float32(s.Position().Y), float32(w), float32(h))
+
+	r.DrawTexturePro(
+		s.Sprite, src, dest, r.NewVector2(0, 0), 0, r.White,
+	)
 
 	// Draw debug messages about the entity's current information.
 	s.debugDraw()
@@ -214,7 +293,7 @@ func (s *Slime) debugDraw() {
 	)
 
 	r.DrawText(
-		fmt.Sprintf("G[%v]", s.OnGround()),
+		fmt.Sprintf("G[%v] ATK[%v]", s.OnGround(), s.attacking),
 		int(s.Position().X), int(int32(s.Position().Y)+(s.Sprite.Height)), 10,
 		r.White,
 	)
@@ -228,7 +307,7 @@ func (s *Slime) debugDraw() {
 	// Draw the collision box for debugging reasons.
 	r.DrawRectangleLines(
 		int(s.Position().X), int(s.Position().Y),
-		int(s.Sprite.Width), int(s.Sprite.Height),
+		int(s.Ase.FrameBoundaries().Width), int(s.Ase.FrameBoundaries().Height),
 		r.Red,
 	)
 }
