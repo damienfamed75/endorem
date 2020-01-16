@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/damienfamed75/aseprite"
 	"github.com/damienfamed75/endorem/pkg/common"
 	"github.com/damienfamed75/endorem/pkg/physics"
 
@@ -18,6 +19,7 @@ var (
 // FungalBoss is the set boss of level one, this enemy will be placed
 // at the end of the first level
 type FungalBoss struct {
+	Ase    *aseprite.File
 	Sprite r.Texture2D
 
 	Health  int
@@ -49,7 +51,7 @@ type FungalBoss struct {
 
 func setupFungalBoss() *FungalBoss {
 	return &FungalBoss{
-		//Sprite:          r.LoadTexture("assets/fungalboss.png"),
+		Sprite:          r.LoadTexture("assets/mushroom.png"),
 		Health:          1 + common.GlobalConfig.Enemy.AddedHealth,
 		maxSpeedX:       0,
 		maxSpeedY:       0,
@@ -66,6 +68,15 @@ func setupFungalBoss() *FungalBoss {
 
 func NewFungalBoss(x, y int, world *physics.Space) *FungalBoss {
 	f := setupFungalBoss()
+	var err error
+
+	f.Ase, err = aseprite.Open("assets/mushroom.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Queues a default animation.
+	f.Ase.Play("idle")
 
 	// Store important spaces in the world
 	f.player = world.FilterByTags(common.TagPlayer)
