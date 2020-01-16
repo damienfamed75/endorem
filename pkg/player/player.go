@@ -61,6 +61,7 @@ func setupPlayer() *Player {
 		Inventory:       NewInventory(),
 		Facing:          common.Right,
 		Health:          3,
+		MaxHealth:       3,
 		maxSpeedX:       4,
 		maxSpeedY:       8,
 		damagePushback:  20,
@@ -181,7 +182,7 @@ func (p *Player) Draw() {
 		p.Sprite, src, dest, r.NewVector2(0, 0), 0, p.Color,
 	)
 
-	p.debugDraw()
+	// p.debugDraw()
 }
 
 func (p *Player) TakeDamage(dir float32) {

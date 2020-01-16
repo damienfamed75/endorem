@@ -51,7 +51,7 @@ func (s *TestingScene) Preload() {
 
 	// s.player.Body.AddGround(*s.ground...)
 	s.camera = common.NewEndoCamera(s.player.Collision)
-	s.camera.Zoom = 2
+	// s.camera.Zoom = 2
 
 	// Add the player to the world space.
 	s.world.Add(*s.player.Space...)
@@ -122,7 +122,7 @@ func (s *TestingScene) Update(dt float32) {
 
 // Draw frames
 func (s *TestingScene) Draw() {
-	r.BeginMode2D(s.camera.Camera2D)
+	// r.BeginMode2D(s.camera.Camera2D)
 	r.ClearBackground(r.Black)
 
 	// Draw all ground elements.
@@ -142,7 +142,7 @@ func (s *TestingScene) Draw() {
 
 	s.player.Draw()
 
-	r.EndMode2D()
+	// r.EndMode2D()
 }
 
 // Unload everything in TestingScene

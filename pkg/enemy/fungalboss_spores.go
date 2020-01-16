@@ -62,7 +62,7 @@ func (s *Spores) CreateRow() {
 
 	// bases spore displacement on the boss position and time
 	// how far each spore is (X-axis) in a row
-	difference := rand.Int31n(80) + 50
+	difference := rand.Int31n(50) + 10
 	area := s.rowStart - difference
 
 	// For the amount of spores, create a hitbox based on the

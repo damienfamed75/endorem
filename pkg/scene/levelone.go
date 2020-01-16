@@ -125,7 +125,7 @@ func (l *LevelOne) Update(dt float32) {
 
 func (l *LevelOne) Draw() {
 	// r.BeginMode2D(l.overviewCam)
-	r.BeginMode2D(l.camera.Camera2D)
+	// r.BeginMode2D(l.camera.Camera2D)
 	r.ClearBackground(r.Black)
 
 	for i := range *l.ground {
@@ -137,7 +137,7 @@ func (l *LevelOne) Draw() {
 
 	l.player.Draw()
 
-	r.EndMode2D()
+	// r.EndMode2D()
 }
 
 func (l *LevelOne) Unload() {
