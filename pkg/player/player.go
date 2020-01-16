@@ -51,6 +51,8 @@ type Player struct {
 	soundJump       *r.Sound
 	soundDoubleJump *r.Sound
 
+	ResolvSpace *resolv.Space
+
 	*Inventory
 }
 
@@ -86,6 +88,7 @@ func NewPlayer(x, y int, deathFunc func(), ground *physics.Space) *Player {
 		log.Fatal(err)
 	}
 
+	p.ResolvSpace = resolv.NewSpace()
 	p.soundHurt = r.LoadSound("assets/sounds/Take_Damage_3.wav")
 	p.soundJump = r.LoadSound("assets/sounds/Dry_Sword_Swing.wav")
 	p.soundDoubleJump = r.LoadSound("assets/sounds/Dry_Sword_Swing.wav")
@@ -116,6 +119,8 @@ func NewPlayer(x, y int, deathFunc func(), ground *physics.Space) *Player {
 
 	// Set all spaces to have self referencial data.
 	p.SetData(p)
+
+	p.ResolvSpace.Add(p.Collision)
 
 	p.AddGround(*ground...)
 

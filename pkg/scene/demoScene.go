@@ -32,6 +32,7 @@ type DemoScene struct {
 	boss   *resolv.Space
 	ground *physics.Space
 	world  *physics.Space
+	fungus *enemy.FungalBoss
 
 	camera *common.EndoCamera
 }
@@ -91,9 +92,11 @@ func (d *DemoScene) Preload() {
 	// Add player to world space.
 	d.world.Add(*d.player.Space...)
 
+	d.fungus = enemy.NewFungalBoss(700, 1000-96-128, d.world)
+
 	// Add enemies and boss to space
 	d.boss.Add(
-		enemy.NewFungalBoss(700, 1000-96-128, d.world),
+		d.fungus,
 	)
 	// Add enemies and boss to space
 
@@ -123,9 +126,29 @@ func (d *DemoScene) Update(dt float32) {
 	// r.CloseWindow()
 	// exit
 	// }
+
+	d.player.Collision.X = int32(d.player.Position().X)
+	d.player.Collision.Y = int32(d.player.Position().Y)
+
 	for i := range *d.boss {
 		(*d.boss)[i].(common.Entity).Update(dt)
 	}
+
+	if d.boss.IsColliding(d.player.Collision) {
+		fmt.Println("HELLO")
+		d.player.TakeDamage(-1)
+	}
+
+	if d.player.MaskObj.Hitbox.IsColliding(d.fungus.Hurtbox) {
+		fmt.Println("HIT BOSS YAY!")
+		d.fungus.TakeDamage()
+	}
+	// for i := range *d.boss {
+	// 	if (*d.boss)[i].IsColliding(d.player.Collision) {
+	// 		fmt.Println("HELLO")
+	// 		d.player.TakeDamage(-1)
+	// 	}
+	// }
 }
 
 // Draw frames
@@ -154,31 +177,19 @@ func (d *DemoScene) Draw() {
 	}
 
 	for i := 0; i < d.player.MaxHealth; i++ {
-		fmt.Printf("HELT: [%v] of [%v]\n", i, d.player.MaxHealth)
 		var heart r.Texture2D
-		if i > d.player.Health {
+		if i >= d.player.Health {
 			heart = d.heartEmpty
-			// r.DrawTexture(d.heartEmpty, int(d.heartEmpty.Width)*i, r.GetScreenHeight()-int(d.heartEmpty.Height), r.White)
 		} else {
 			heart = d.heartFull
-			// r.DrawTexture(d.heartFull, int(d.heartFull.Width)*i, r.GetScreenHeight()-int(d.heartFull.Height), r.White)
 		}
 
-		// pos := r.GetWorldToScreen2D(
-		// pos := r.GetScreenToWorld2D(
-		// 	r.NewVector2(float32(int(heart.Width)*i), float32(r.GetScreenHeight()-int(heart.Height))),
-		// 	d.camera.Camera2D,
-		// )
 		pos := r.NewVector2(
 			d.player.RayRec().MinPosition().X+float32((int(heart.Width/2)*i))-d.player.RayRec().Width/4,
 			d.player.RayRec().MaxPosition().Y+float32(heart.Height/2),
 		)
 
 		r.DrawTextureEx(heart, pos, 0, 0.5, r.White)
-		// r.DrawTexture(heart, int(d.camera.Position.X)+int(heart.Width)*(i+1), int(d.camera.Position.Y)+int(heart.Height), r.White)
-		// r.DrawTexture(heart, d.player.RayRec().X*(i+1), int(d.camera.Offset.Y)+int(heart.Height), r.White)
-		// r.DrawTexture(heart, int(d.camera.Offset.X)+int(heart.Width)*(i+1), int(d.camera.Offset.Y)+int(heart.Height), r.White)
-		// r.DrawTexture(heart, int(heart.Width)*(i+1), r.GetScreenHeight()-int(heart.Height), r.White)
 	}
 
 	r.EndMode2D()

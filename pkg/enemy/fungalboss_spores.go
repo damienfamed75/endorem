@@ -12,6 +12,7 @@ import (
 
 type Spores struct {
 	Ase    *aseprite.File
+	Color  r.Color
 	Sprite r.Texture2D
 
 	sporeMoveX float64
@@ -31,6 +32,7 @@ func setupSpores() *Spores {
 		Speed:    -3,
 		rowAmt:   5,
 		rowApart: 80,
+		Color:    r.White,
 		Space:    resolv.NewSpace(),
 	}
 }
@@ -102,11 +104,11 @@ func (s *Spores) Draw() {
 		dest := r.NewRectangle(float32(x), float32(y), float32(w), float32(h))
 
 		r.DrawTexturePro(
-			s.Sprite, src, dest, r.NewVector2(0, 0), 0, r.White,
+			s.Sprite, src, dest, r.NewVector2(0, 0), 0, s.Color,
 		)
 	}
 	// To check moving hitboxes of spores
-	s.debugDraw()
+	// s.debugDraw()
 }
 
 func (s *Spores) debugDraw() {

@@ -42,7 +42,7 @@ func setupMask() *Mask {
 		shotSprite:   r.LoadTexture("assets/projectile.png"),
 		shotCooldown: time.Now(),
 		shotTimer:    time.Duration(500),
-		shotRange:    500,
+		shotRange:    100,
 		shotSpeed:    5,
 		Hitbox:       resolv.NewSpace(),
 		state:        common.StateIdle,
