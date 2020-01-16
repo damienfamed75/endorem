@@ -116,7 +116,7 @@ func (p *Player) Update(dt float32) r.Vector2 {
 		Y: float32(p.Position().Y),
 	}
 	p.MaskObj.checkDirection(maskTar, p.Facing)
-	p.MaskObj.Update()
+	p.MaskObj.Update(dt)
 
 	p.checkAttack()
 
